@@ -58,7 +58,7 @@ node default {
     ## Docker
     class { 'docker':
         ensure      => '17.12.0~ce-0~ubuntu',
-        docker_opts => '--storage-driver=devicemapper --storage-opt dm.datadev=/dev/lvm/data --storage-opt dm.metadatadev=/dev/lvm/metadata --storage-opt dm.blocksize=512K --storage-opt dm.fs=xfs',
+        docker_opts => '--init --storage-driver=devicemapper --storage-opt dm.datadev=/dev/lvm/data --storage-opt dm.metadatadev=/dev/lvm/metadata --storage-opt dm.blocksize=512K --storage-opt dm.fs=xfs',
     }
 
     class { 'docker::dockviz': }

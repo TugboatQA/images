@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+set -ex
+
+DIR="services/$1"
+
+# Read the image manifest
+source ${DIR}/manifest
+NAME=${NAME:-$1}
+FROM=${FROM:-$1}
+FILTER=${FILTER:-cat}
+CUSTOM=${CUSTOM:-}
+
+function getTags() {
+    SOURCE="${SOURCE:-https://raw.githubusercontent.com/docker-library/official-images/master/library/${FROM}}"
+    curl --silent --location --fail --retry 3 "${SOURCE}" | \
+        grep Tags | \
+        sed 's/^.*Tags: //g' | \
+        grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver | \
+        ${FILTER} | \
+        sed 's/, /:/' | \
+        sed 's/, /,/g' | \
+        sort
+}
+
+function getAliases() {
+    TAGS=$1
+    if $(echo "$TAGS" | grep -q :); then
+        echo "$TAGS" | cut -d: -f2
+    fi
+}
+
+function getTemplate() {
+    TEMPLATE="templates/Dockerfile.template"
+    if [ -e "${DIR}/${TEMPLATE}" ]; then
+        echo "${DIR}/${TEMPLATE}"
+    elif [ -e "${TEMPLATE}" ]; then
+        echo "${TEMPLATE}"
+    else
+        exit 1
+    fi
+}
+
+function renderDockerfile() {
+    TEMPLATEFILE=$(getTemplate)
+    IMAGE="${FROM}:$1"
+    cat $TEMPLATEFILE | \
+        sed "s|{{FROM}}|${IMAGE}|g" | \
+        sed "s|{{CUSTOM}}|${CUSTOM}|g"
+}
+
+rm -rf images/$NAME
+
+for TAGS in $(getTags); do
+    TAG=$(echo "$TAGS" | cut -d: -f1)
+    ALIASES=$(getAliases $TAGS)
+
+    echo "Generating images/$NAME/$TAG/Dockerfile"
+    mkdir -p images/$NAME/$TAG
+
+    renderDockerfile $TAG > images/$NAME/$TAG/Dockerfile
+    echo "${TAG}" > images/$NAME/$TAG/TAG
+    echo "${ALIASES}" > images/$NAME/$TAG/ALIASES
+    echo "${NAME}" > images/$NAME/$TAG/NAME
+done

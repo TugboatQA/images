@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -ex
+
+NAMESPACE=${NAMESPACE:-tugboat}
+
+DOCKERFILE=$1
+pushd $(dirname $DOCKERFILE)
+
+echo Building docker image from $DOCKERFILE
+
+NAME=$(cat NAME)
+TAG=$(cat TAG)
+IMAGE=${NAMESPACE}/${NAME}:${TAG}
+
+docker build --pull -t $IMAGE .
+
+for ALIAS in $(sed 's/,/ /g' ALIASES); do
+    docker tag ${IMAGE} ${NAMESPACE}/${NAME}:${ALIAS}
+done
+
+popd

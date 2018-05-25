@@ -12,3 +12,6 @@
 
 # Local Vagrant config file
 /Vagrant.local.yml
+
+# Resulting image Dockerfiles
+/images

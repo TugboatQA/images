@@ -15,15 +15,11 @@ RUN apt-get update && \
     apt-get install -y \
         git locales sudo openssh-client ca-certificates tar gzip parallel \
         net-tools netcat unzip zip bzip2 gnupg curl wget vim ssmtp runit && \
-
     echo "[user]" > ~/.gitconfig && \
     echo "    email = root@tugboat.qa" >> ~/.gitconfig && \
     echo "    name = Tugboat" >> ~/.gitconfig && \
-
     ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
-
     locale-gen C.UTF-8 && \
-
     mkdir -p /etc/service
 
 ENV LANG C.UTF-8
@@ -31,5 +27,7 @@ ENV LANGUAGE C
 ENV LC_ALL C.UTF-8
 
 {{CUSTOM}}
+
+{{RUN}}
 
 ENTRYPOINT ["/usr/bin/runsvdir", "-P", "/etc/service"]

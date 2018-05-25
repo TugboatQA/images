@@ -1,2 +1,12 @@
 NAME=mysql
 FROM=mysql
+
+CUSTOM=$(cat << 'EOF'
+
+EXPOSE 3306
+
+ENV MYSQL_ALLOW_EMPTY_PASSWORD=true \
+    MYSQL_USER=root
+
+EOF
+)

@@ -30,36 +30,36 @@ function getAliases() {
     fi
 }
 
-function getTemplate() {
-    TEMPLATE="templates/Dockerfile.template"
-    if [ -e "${DIR}/${TEMPLATE}" ]; then
-        echo "${DIR}/${TEMPLATE}"
-    elif [ -e "${TEMPLATE}" ]; then
-        echo "${TEMPLATE}"
-    else
-        exit 1
-    fi
-}
-
 function renderDockerfile() {
-    TEMPLATEFILE=$(getTemplate)
     IMAGE="${FROM}:$1"
-    cat $TEMPLATEFILE | \
+
+    if [ $2 -eq 1 ]; then
+        RUN="RUN mkdir -p /etc/service/${NAME}\nCOPY run /etc/service/${NAME}/run"
+    fi
+
+    cat Dockerfile.template | \
         sed "s|{{FROM}}|${IMAGE}|g" | \
-        sed "s|{{CUSTOM}}|${CUSTOM}|g"
+        sed "/{{CUSTOM}}/ r $CUSTOM" | \
+        sed "s|{{CUSTOM}}||g" | \
+        sed "s|{{RUN}}|${RUN}|g"
 }
 
 rm -rf images/$NAME
 
 for TAGS in $(getTags); do
-    TAG=$(echo "$TAGS" | cut -d: -f1)
-    ALIASES=$(getAliases $TAGS)
+    TAG=$(echo "${TAGS}" | cut -d: -f1)
+    ALIASES=$(getAliases ${TAGS})
 
-    echo "Generating images/$NAME/$TAG/Dockerfile"
-    mkdir -p images/$NAME/$TAG
+    mkdir -p "images/${NAME}/${TAG}"
 
-    renderDockerfile $TAG > images/$NAME/$TAG/Dockerfile
-    echo "${TAG}" > images/$NAME/$TAG/TAG
-    echo "${ALIASES}" > images/$NAME/$TAG/ALIASES
-    echo "${NAME}" > images/$NAME/$TAG/NAME
+    if [ -e "${DIR}/run" ]; then
+        cp "${DIR}/run" "images/${NAME}/${TAG}/run"
+        chmod +x "images/${NAME}/${TAG}/run"
+        RUN=1
+    fi
+
+    renderDockerfile $TAG $RUN > "images/${NAME}/${TAG}/Dockerfile"
+    echo "${TAG}" > "images/${NAME}/${TAG}/TAG"
+    echo "${ALIASES}" > "images/${NAME}/${TAG}/ALIASES"
+    echo "${NAME}" > "images/${NAME}/${TAG}/NAME"
 done

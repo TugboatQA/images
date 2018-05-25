@@ -25,7 +25,7 @@ Vagrant.require_version ">= 1.8.1"
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-    config.vm.hostname="tugboat.local"
+    config.vm.hostname="tugboat-images.local"
     config.vm.box = BOX
 
     # Network settings

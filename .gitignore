@@ -1,0 +1,14 @@
+# Various temp files.
+*.DS_Store
+*.swp
+*.swo
+.vagrant
+
+# Jetbrains IDE
+.idea
+
+# Visual Code Studio
+.vscode
+
+# Local Vagrant config file
+/Vagrant.local.yml

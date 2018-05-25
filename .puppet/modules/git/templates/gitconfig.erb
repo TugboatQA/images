@@ -1,0 +1,12 @@
+## THIS FILE IS MANAGED BY PUPPET
+## modules<%= template_source.gsub(Regexp.new("^#{Puppet::Node::Environment.current[:modulepath].gsub(':','|')}"),"") %>
+
+<%- if (@user_email) || (@user_name) -%>
+[user]
+<%- end -%>
+    <%- if @user_email -%>
+        email = <%= @user_email %>
+    <%- end -%>
+    <%- if @user_name -%>
+        name = <%= @user_name %>
+    <%- end -%>

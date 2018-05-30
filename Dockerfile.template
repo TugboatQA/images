@@ -30,4 +30,4 @@ ENV LC_ALL C.UTF-8
 
 {{RUN}}
 
-ENTRYPOINT ["/usr/bin/runsvdir", "-P", "/etc/service"]
+CMD ["/usr/bin/runsvdir", "-P", "/etc/service"]

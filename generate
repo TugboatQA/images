@@ -9,7 +9,7 @@ source ${DIR}/manifest
 NAME=${NAME:-$1}
 FROM=${FROM:-$1}
 FILTER=${FILTER:-cat}
-CUSTOM=${CUSTOM:-}
+CUSTOM="${CUSTOM:-}"
 
 function getTags() {
     SOURCE="${SOURCE:-https://raw.githubusercontent.com/docker-library/official-images/master/library/${FROM}}"
@@ -33,15 +33,20 @@ function getAliases() {
 function renderDockerfile() {
     IMAGE="${FROM}:$1"
 
+    TEMP=$(mktemp)
+    echo "${CUSTOM}" > $TEMP
+
     if [ $2 -eq 1 ]; then
         RUN="RUN mkdir -p /etc/service/${NAME}\nCOPY run /etc/service/${NAME}/run"
     fi
 
     cat Dockerfile.template | \
         sed "s|{{FROM}}|${IMAGE}|g" | \
-        sed "/{{CUSTOM}}/ r $CUSTOM" | \
-        sed "s|{{CUSTOM}}||g" | \
+        sed "/{{CUSTOM}}/ r ${TEMP}" | \
+        sed "/{{CUSTOM}}/d" | \
         sed "s|{{RUN}}|${RUN}|g"
+
+    rm $TEMP
 }
 
 rm -rf images/$NAME

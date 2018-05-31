@@ -2,8 +2,14 @@
 
 set -ex
 
-NAME=$1
 DIR="services/$1"
+
+if [ -e "${DIR}/manifest" ]; then
+    source "${DIR}/manifest"
+fi
+
+NAME=${NAME:-$1}
+FILTER=${FILTER:-cat}
 
 function getTags() {
     SOURCE="${SOURCE:-https://raw.githubusercontent.com/docker-library/official-images/master/library/${NAME}}"
@@ -11,6 +17,7 @@ function getTags() {
         grep Tags | \
         sed 's/^.*Tags: //g' | \
         grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver | \
+        ${FILTER} | \
         sed 's/, /:/' | \
         sed 's/, /,/g' | \
         sort

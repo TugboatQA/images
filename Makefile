@@ -1,4 +1,4 @@
-SERVICES = $(shell echo services/*/ | cut -d/ -f2)
+SERVICES = $(shell ls services)
 
 .PHONY: all clean $(SERVICES)
 

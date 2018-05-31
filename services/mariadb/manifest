@@ -1,0 +1,2 @@
+NAME=mariadb
+FROM=mariadb

@@ -2,21 +2,15 @@
 
 set -ex
 
+NAME=$1
 DIR="services/$1"
 
-# Read the image manifest
-source ${DIR}/manifest
-NAME=${NAME:-$1}
-FROM=${FROM:-$1}
-FILTER=${FILTER:-cat}
-
 function getTags() {
-    SOURCE="${SOURCE:-https://raw.githubusercontent.com/docker-library/official-images/master/library/${FROM}}"
+    SOURCE="${SOURCE:-https://raw.githubusercontent.com/docker-library/official-images/master/library/${NAME}}"
     curl --silent --location --fail --retry 3 "${SOURCE}" | \
         grep Tags | \
         sed 's/^.*Tags: //g' | \
         grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver | \
-        ${FILTER} | \
         sed 's/, /:/' | \
         sed 's/, /,/g' | \
         sort
@@ -30,7 +24,7 @@ function getAliases() {
 }
 
 function renderDockerfile() {
-    IMAGE="${FROM}:$1"
+    IMAGE="${NAME}:$1"
 
     if [ $2 -eq 1 ]; then
         RUN="RUN mkdir -p /etc/service/${NAME}\nCOPY run /etc/service/${NAME}/run"

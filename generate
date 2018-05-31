@@ -8,8 +8,12 @@ if [ -e "${DIR}/manifest" ]; then
     source "${DIR}/manifest"
 fi
 
+SERVICE=$1
 NAME=${NAME:-$1}
+FROM=${FROM:-$NAME}
 FILTER=${FILTER:-cat}
+
+echo $FILTER
 
 function getTags() {
     SOURCE="${SOURCE:-https://raw.githubusercontent.com/docker-library/official-images/master/library/${NAME}}"
@@ -30,38 +34,21 @@ function getAliases() {
     fi
 }
 
-function renderDockerfile() {
-    IMAGE="${NAME}:$1"
-
-    if [ $2 -eq 1 ]; then
-        RUN="RUN mkdir -p /etc/service/${NAME}\nCOPY run /etc/service/${NAME}/run"
-    fi
-
-    if [ "x$3" == "x" ]; then
-        CUSTOM=/dev/null
-    else
-        CUSTOM=$3
-    fi
-
-    cat Dockerfile.template | \
-        sed "s|{{FROM}}|${IMAGE}|g" | \
-        sed "/{{CUSTOM}}/ r ${CUSTOM}" | \
-        sed "/{{CUSTOM}}/d" | \
-        sed "s|{{RUN}}|${RUN}|g"
-}
-
 rm -rf images/$NAME
 
 for TAGS in $(getTags); do
     TAG=$(echo "${TAGS}" | cut -d: -f1)
     ALIASES=$(getAliases ${TAGS})
+    IMGDIR="images/${SERVICE}/${TAG}"
+    IMAGE="${FROM}:${TAG}"
 
-    mkdir -p "images/${NAME}/${TAG}"
+    mkdir -p "${IMGDIR}"
 
+    RUN=""
     if [ -e "${DIR}/run" ]; then
-        cp "${DIR}/run" "images/${NAME}/${TAG}/run"
-        chmod +x "images/${NAME}/${TAG}/run"
-        RUN=1
+        cp "${DIR}/run" "${IMGDIR}/run"
+        chmod +x "${IMGDIR}/run"
+        RUN="RUN mkdir -p /etc/service/${NAME}\nCOPY run /etc/service/${NAME}/run"
     fi
 
     CUSTOM=/dev/null
@@ -70,11 +57,17 @@ for TAGS in $(getTags); do
     fi
 
     if [ -e "${DIR}/files" ]; then
-        cp -r "${DIR}/files" "images/${NAME}/${TAG}/"
+        cp -r "${DIR}/files" "${IMGDIR}/"
     fi
 
-    renderDockerfile $TAG $RUN $CUSTOM > "images/${NAME}/${TAG}/Dockerfile"
-    echo "${TAG}" > "images/${NAME}/${TAG}/TAG"
-    echo "${ALIASES}" > "images/${NAME}/${TAG}/ALIASES"
-    echo "${NAME}" > "images/${NAME}/${TAG}/NAME"
+    cat Dockerfile.template | \
+        sed "s|{{FROM}}|${IMAGE}|g" | \
+        sed "/{{CUSTOM}}/ r ${CUSTOM}" | \
+        sed "/{{CUSTOM}}/d" | \
+        sed "s|{{RUN}}|${RUN}|g" \
+        > "${IMGDIR}/Dockerfile"
+
+    echo "${TAG}" > "${IMGDIR}/TAG"
+    echo "${ALIASES}" > "${IMGDIR}/ALIASES"
+    echo "${NAME}" > "${IMGDIR}/NAME"
 done

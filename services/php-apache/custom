@@ -1,0 +1,20 @@
+# Set up apache services
+RUN mkdir -p /etc/service/apache && \
+    mkdir -p /etc/service/apache-access-forwarder && \
+    mkdir -p /etc/service/apache-error-forwarder && \
+    echo "umask 0002" >> /etc/apache2/envvars
+
+COPY files/apache.runit /etc/service/apache/run
+COPY files/apache-access-forwarder.runit /etc/service/apache-access-forwarder/run
+COPY files/apache-error-forwarder.runit /etc/service/apache-error-forwarder/run
+
+# Install composer
+RUN php -r "copy('https://raw.githubusercontent.com/composer/getcomposer.org/master/web/installer', 'composer-setup.php');" && \
+    php composer-setup.php && \
+    php -r "unlink('composer-setup.php');" && \
+    mv composer.phar /usr/local/bin/composer
+
+RUN (pecl install xdebug || pecl install xdebug-2.5.5) && docker-php-ext-enable xdebug
+
+EXPOSE 80
+HEALTHCHECK CMD /bin/nc -z 127.0.0.1 80

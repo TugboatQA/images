@@ -16,15 +16,29 @@ FILTER=${FILTER:-cat}
 echo $FILTER
 
 function getTags() {
+    TEMP=$(mktemp -d)
+
+    # Get the official image config, split them into separate temp files
     SOURCE="${SOURCE:-https://raw.githubusercontent.com/docker-library/official-images/master/library/${NAME}}"
     curl --silent --location --fail --retry 3 "${SOURCE}" | \
-        grep Tags | \
-        sed 's/^.*Tags: //g' | \
-        grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver | \
-        ${FILTER} | \
-        sed 's/, /:/' | \
-        sed 's/, /,/g' | \
-        sort
+        awk -v TEMP="$TEMP" -v RS= '{ print > (TEMP"/image" ++CNT) }'
+
+    # Parse each image definition individually. This merges Tags and SharedTags
+    # so we don't end up with multiple images with the same content
+    for IMAGE in `ls "${TEMP}"`; do
+        cat "${TEMP}/${IMAGE}" | \
+            grep Tags | \
+            sort | \
+            sed 's/^.*Tags: //g' | \
+            sed 'N;s/\n/, /g' | \
+            grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver | \
+            ${FILTER} | \
+            sed 's/, /:/' | \
+            sed 's/, /,/g'
+    done
+
+    # Clean up
+    rm -rf "${TEMP}"
 }
 
 function getAliases() {

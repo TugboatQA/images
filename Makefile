@@ -10,3 +10,5 @@ $(SERVICES):
 
 clean:
 	rm -rf images
+	docker container prune --force
+	docker image prune --all --force

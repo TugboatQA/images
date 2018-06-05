@@ -1,1 +1,1 @@
-FILTER="grep -v -e rc"
+FILTER="grep -v -e rc -e unstable"

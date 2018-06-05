@@ -10,8 +10,8 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90tugboat && \
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && \
-    mkdir -p /usr/share/man/man1 && \
+# Install common packages & tools
+RUN mkdir -p /usr/share/man/man1 && \
     apt-get install -y \
         git locales sudo openssh-client ca-certificates tar gzip parallel \
         net-tools netcat unzip zip bzip2 gnupg curl wget vim ssmtp runit && \
@@ -19,13 +19,16 @@ RUN apt-get update && \
     echo "    email = root@tugboat.qa" >> ~/.gitconfig && \
     echo "    name = Tugboat" >> ~/.gitconfig && \
     ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
-    localedef -i en_US -c -f UTF-8 en_US.UTF-8 && \
-    locale-gen en_US.UTF-8 && \
     mkdir -p /etc/service
 
+# Configure locale
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
+RUN localedef -i en_US -c -f UTF-8 en_US.UTF-8 && \
+    echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
+    touch /usr/share/locale/locale.alias && \
+    locale-gen
 
 {{CUSTOM}}
 

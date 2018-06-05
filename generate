@@ -2,6 +2,10 @@
 
 set -ex
 
+function defaultParse() {
+    cat "$1" | grep Tags | sort | sed 's/^.*Tags: //g' | sed 'N;s/\n/, /g'
+}
+
 DIR="services/$1"
 
 if [ -e "${DIR}/manifest" ]; then
@@ -12,8 +16,7 @@ SERVICE=$1
 NAME=${NAME:-$1}
 FROM=${FROM:-$NAME}
 FILTER=${FILTER:-cat}
-
-echo $FILTER
+PARSE=${PARSE:-defaultParse}
 
 function getTags() {
     TEMP=$(mktemp -d)
@@ -23,14 +26,9 @@ function getTags() {
     curl --silent --location --fail --retry 3 "${SOURCE}" | \
         awk -v TEMP="$TEMP" -v RS= '{ print > (TEMP"/image" ++CNT) }'
 
-    # Parse each image definition individually. This merges Tags and SharedTags
-    # so we don't end up with multiple images with the same content
+    # Parse each image definition individually.
     for IMAGE in `ls "${TEMP}"`; do
-        cat "${TEMP}/${IMAGE}" | \
-            grep Tags | \
-            sort | \
-            sed 's/^.*Tags: //g' | \
-            sed 'N;s/\n/, /g' | \
+        ${PARSE} "${TEMP}/${IMAGE}" | \
             grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver | \
             ${FILTER} | \
             sed 's/, /:/' | \

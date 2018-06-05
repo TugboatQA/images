@@ -24,6 +24,12 @@ node default {
     class { 'git': }
     class { 'xenial': }
 
+    class { 'avahi':
+        domain_name      => $::domain,
+        allow_interfaces => 'eth1',
+        use_ipv6         => 'no',
+    }
+
     ## LVM
     exec { 'pvcreate /dev/sdb -y':
         unless  => 'pvs /dev/sdb',

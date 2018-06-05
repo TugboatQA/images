@@ -1,0 +1,6 @@
+function parse() {
+    cat "$1" | grep couchdb-docker | cut -d: -f1 | awk '$1=$1' ORS=', ' | sed 's/, $//'
+}
+
+PARSE=parse
+FILTER="grep -v -e couchperuser"

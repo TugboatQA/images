@@ -1,0 +1,2 @@
+NAME="node"
+FILTER="grep -v -e chakracore"

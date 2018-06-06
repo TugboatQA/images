@@ -2,8 +2,29 @@
 
 set -ex
 
-function defaultParse() {
-    cat "$1" | grep Tags | sort | sed 's/^.*Tags: //g' | sed 'N;s/\n/, /g'
+function getTags() {
+    TEMP=$(mktemp -d)
+    FILTER=$1
+
+    # Get the official image config, split them into separate temp files
+    SOURCE="${SOURCE:-https://raw.githubusercontent.com/docker-library/official-images/master/library/${NAME}}"
+    curl --silent --location --fail --retry 3 "${SOURCE}" | \
+        awk -v TEMP="$TEMP" -v RS= '{ print > (TEMP"/image" ++CNT) }'
+
+    # Parse each image definition individually.
+    for IMAGE in `ls "${TEMP}"`; do
+        cat "${TEMP}/${IMAGE}" | \
+            grep Tags | \
+            sort | \
+            sed 's/^.*Tags: //g' | \
+            sed 'N;s/\n/, /g' | \
+            grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver | \
+            ${FILTER} | \
+            sed 's/, /,/g'
+    done
+
+    # Clean up
+    rm -rf "${TEMP}"
 }
 
 DIR="services/$1"
@@ -16,42 +37,13 @@ SERVICE=$1
 NAME=${NAME:-$1}
 FROM=${FROM:-$NAME}
 FILTER=${FILTER:-cat}
-PARSE=${PARSE:-defaultParse}
 PACKAGES=${PACKAGES:-apt}
-
-function getTags() {
-    TEMP=$(mktemp -d)
-
-    # Get the official image config, split them into separate temp files
-    SOURCE="${SOURCE:-https://raw.githubusercontent.com/docker-library/official-images/master/library/${NAME}}"
-    curl --silent --location --fail --retry 3 "${SOURCE}" | \
-        awk -v TEMP="$TEMP" -v RS= '{ print > (TEMP"/image" ++CNT) }'
-
-    # Parse each image definition individually.
-    for IMAGE in `ls "${TEMP}"`; do
-        ${PARSE} "${TEMP}/${IMAGE}" | \
-            grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver | \
-            ${FILTER} | \
-            sed 's/, /:/' | \
-            sed 's/, /,/g'
-    done
-
-    # Clean up
-    rm -rf "${TEMP}"
-}
-
-function getAliases() {
-    TAGS=$1
-    if $(echo "$TAGS" | grep -q :); then
-        echo "$TAGS" | cut -d: -f2
-    fi
-}
+GETTAGS=${GETTAGS:-getTags}
 
 rm -rf images/$NAME
 
-for TAGS in $(getTags); do
-    TAG=$(echo "${TAGS}" | cut -d: -f1)
-    ALIASES=$(getAliases ${TAGS})
+for TAGS in $($GETTAGS "${FILTER}"); do
+    TAG=$(echo "${TAGS}" | cut -d, -f1)
     IMGDIR="images/${SERVICE}/${TAG}"
     IMAGE="${FROM}:${TAG}"
 
@@ -64,23 +56,22 @@ for TAGS in $(getTags); do
         RUN="RUN mkdir -p /etc/service/${NAME}\nCOPY run /etc/service/${NAME}/run"
     fi
 
-    CUSTOM=/dev/null
+    DOCKERFILE=/dev/null
     if [ -e "${DIR}/Dockerfile" ]; then
-        CUSTOM="${DIR}/Dockerfile"
+        DOCKERFILE="${DIR}/Dockerfile"
     fi
 
     if [ -e "${DIR}/files" ]; then
         cp -r "${DIR}/files" "${IMGDIR}/"
     fi
 
-    cat Dockerfile.template | \
+    cat Dockerfile.${PACKAGES}.template | \
         sed "s|{{FROM}}|${IMAGE}|g" | \
-        sed "/{{CUSTOM}}/ r ${CUSTOM}" | \
-        sed "/{{CUSTOM}}/d" | \
+        sed "/{{DOCKERFILE}}/ r ${DOCKERFILE}" | \
+        sed "/{{DOCKERFILE}}/d" | \
         sed "s|{{RUN}}|${RUN}|g" \
         > "${IMGDIR}/Dockerfile"
 
-    echo "${TAG}" > "${IMGDIR}/TAG"
-    echo "${ALIASES}" > "${IMGDIR}/ALIASES"
+    echo "${TAGS}" | tr ',' ' ' > "${IMGDIR}/TAGS"
     echo "${NAME}" > "${IMGDIR}/NAME"
 done

@@ -30,7 +30,7 @@ RUN localedef -i en_US -c -f UTF-8 en_US.UTF-8 && \
     touch /usr/share/locale/locale.alias && \
     locale-gen
 
-{{CUSTOM}}
+{{DOCKERFILE}}
 
 {{RUN}}
 

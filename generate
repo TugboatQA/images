@@ -33,9 +33,9 @@ if [ -e "${DIR}/manifest" ]; then
     source "${DIR}/manifest"
 fi
 
-SERVICE=$1
 NAME=${NAME:-$1}
 FROM=${FROM:-$NAME}
+SERVICE=${SERVICE:-$NAME}
 FILTER=${FILTER:-cat}
 PACKAGES=${PACKAGES:-apt}
 GETTAGS=${GETTAGS:-getTags}
@@ -44,7 +44,7 @@ rm -rf images/$NAME
 
 for TAGS in $($GETTAGS "${FILTER}"); do
     TAG=$(echo "${TAGS}" | cut -d, -f1)
-    IMGDIR="images/${SERVICE}/${TAG}"
+    IMGDIR="images/$1/${TAG}"
     IMAGE="${FROM}:${TAG}"
 
     mkdir -p "${IMGDIR}"
@@ -53,7 +53,7 @@ for TAGS in $($GETTAGS "${FILTER}"); do
     if [ -e "${DIR}/run" ]; then
         cp "${DIR}/run" "${IMGDIR}/run"
         chmod +x "${IMGDIR}/run"
-        RUN="RUN mkdir -p /etc/service/${NAME}\nCOPY run /etc/service/${NAME}/run"
+        RUN="RUN mkdir -p /etc/service/${SERVICE}\nCOPY run /etc/service/${SERVICE}/run"
     fi
 
     DOCKERFILE=/dev/null

@@ -1,0 +1,2 @@
+NAME=elasticsearch
+FROM=elasticsearch

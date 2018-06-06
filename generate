@@ -17,6 +17,7 @@ NAME=${NAME:-$1}
 FROM=${FROM:-$NAME}
 FILTER=${FILTER:-cat}
 PARSE=${PARSE:-defaultParse}
+PACKAGES=${PACKAGES:-apt}
 
 function getTags() {
     TEMP=$(mktemp -d)
@@ -64,8 +65,8 @@ for TAGS in $(getTags); do
     fi
 
     CUSTOM=/dev/null
-    if [ -e "${DIR}/custom" ]; then
-        CUSTOM="${DIR}/custom"
+    if [ -e "${DIR}/Dockerfile" ]; then
+        CUSTOM="${DIR}/Dockerfile"
     fi
 
     if [ -e "${DIR}/files" ]; then

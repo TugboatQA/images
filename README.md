@@ -16,7 +16,7 @@ service
 └── run
 ```
 
-### custom
+### Dockerfile
 
 This file contains any custom Dockerfile information required for this image. Images are copied from the base image, so things like EXPOSE or ENV values are not carried over. So, any of those values that need to be in the resulting image need to be duplicated here.
 

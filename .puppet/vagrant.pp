@@ -23,6 +23,7 @@ node default {
     class { 'apt': }
     class { 'git': }
     class { 'xenial': }
+    package { 'jq': }
 
     class { 'avahi':
         domain_name      => $::domain,

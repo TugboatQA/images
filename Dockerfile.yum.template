@@ -1,8 +1,5 @@
 FROM {{FROM}} as source-image
 
-FROM scratch
-COPY --from=source-image / /
-
 # Install common packages & tools
 RUN yum install -y git sudo openssh-clients ca-certificates net-tools bzip2 vim-enhanced \
         make gcc gcc-c++ glibc-static && \

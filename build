@@ -16,6 +16,15 @@ IMAGE=${NAMESPACE}/${NAME}:${TAG}
 
 docker build --pull -t $IMAGE .
 
+# Strip volumes
+TEMP=$(mktemp -d)
+docker save $IMAGE | tar -C "${TEMP}" -x
+CONFIG=`jq -r '.[0].Config' "${TEMP}/manifest.json"`
+jq 'del(.config.Volumes,.container_config.Volumes)' "${TEMP}/${CONFIG}" > "${TEMP}/config.json"
+mv "${TEMP}/config.json" "${TEMP}/${CONFIG}"
+tar -C "${TEMP}" -c . | docker load
+rm -rf "${TEMP}"
+
 for ALIAS in ${ALIASES}; do
     docker tag ${IMAGE} ${NAMESPACE}/${NAME}:${ALIAS}
 done

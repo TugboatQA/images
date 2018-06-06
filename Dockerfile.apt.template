@@ -1,8 +1,5 @@
 FROM {{FROM}} as source-image
 
-FROM scratch
-COPY --from=source-image / /
-
 # make Apt non-interactive
 RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90tugboat && \
     echo 'DPkg::Options "--force-confnew";' >> /etc/apt/apt.conf.d/90tugboat && \

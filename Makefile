@@ -7,6 +7,7 @@ all: $(SERVICES)
 $(SERVICES):
 	./generate $@
 	find ./images/$@ -name Dockerfile -exec ./build {} \;
+	docker image prune --force
 
 clean:
 	rm -rf images

@@ -1,5 +1,3 @@
-EXPOSE 3306
-
 COPY files/mysql/tugboat.cnf /etc/mysql/conf.d/tugboat.cnf
 
 ENV MYSQL_ALLOW_EMPTY_PASSWORD=true \

@@ -20,7 +20,7 @@ docker build --pull -t $IMAGE .
 TEMP=$(mktemp -d)
 docker save $IMAGE | tar -C "${TEMP}" -x
 CONFIG=`jq -r '.[0].Config' "${TEMP}/manifest.json"`
-jq 'del(.config.Volumes,.container_config.Volumes)' "${TEMP}/${CONFIG}" > "${TEMP}/config.json"
+jq 'del(.config.Volumes,.config.Entrypoint)' "${TEMP}/${CONFIG}" > "${TEMP}/config.json"
 mv "${TEMP}/config.json" "${TEMP}/${CONFIG}"
 tar -C "${TEMP}" -c . | docker load
 rm -rf "${TEMP}"

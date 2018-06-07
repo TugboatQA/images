@@ -1,31 +1,37 @@
-FROM {{FROM}} as source-image
-
-# make Apt non-interactive
-RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90tugboat && \
-    echo 'DPkg::Options "--force-confnew";' >> /etc/apt/apt.conf.d/90tugboat && \
-    apt-get update
+FROM {{FROM}}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install common packages & tools
-RUN mkdir -p /usr/share/man/man1 && \
+RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90tugboat && \
+    echo 'DPkg::Options "--force-confnew";' >> /etc/apt/apt.conf.d/90tugboat && \
+    apt-get update && \
+    \
+    mkdir -p /usr/share/man/man1 && \
+    mkdir -p /etc/service && \
+    \
     apt-get install -y \
         git locales sudo openssh-client ca-certificates tar gzip parallel \
         net-tools netcat unzip zip bzip2 gnupg curl wget vim ssmtp runit && \
+    \
     echo "[user]" > ~/.gitconfig && \
     echo "    email = root@tugboat.qa" >> ~/.gitconfig && \
     echo "    name = Tugboat" >> ~/.gitconfig && \
+    \
     ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
-    mkdir -p /etc/service
+    \
+    localedef -i en_US -c -f UTF-8 en_US.UTF-8 && \
+    echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
+    touch /usr/share/locale/locale.alias && \
+    locale-gen && \
+    \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 
 # Configure locale
 ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
-RUN localedef -i en_US -c -f UTF-8 en_US.UTF-8 && \
-    echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
-    touch /usr/share/locale/locale.alias && \
-    locale-gen
+    LANGUAGE en_US:en
+    LC_ALL en_US.UTF-8
 
 {{DOCKERFILE}}
 

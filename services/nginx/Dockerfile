@@ -1,2 +1,1 @@
-EXPOSE 80
 HEALTHCHECK CMD /bin/nc -z 127.0.0.1 80

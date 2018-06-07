@@ -52,7 +52,7 @@ for TAGS in $($GETTAGS "${FILTER}"); do
     RUN=""
     if [ -e "${DIR}/run" ]; then
         cp "${DIR}/run" "${IMGDIR}/run"
-        chmod +x "${IMGDIR}/run"
+        chmod 755 "${IMGDIR}/run"
         RUN="RUN mkdir -p /etc/service/${SERVICE}\nCOPY run /etc/service/${SERVICE}/run"
     fi
 

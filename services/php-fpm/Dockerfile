@@ -6,5 +6,4 @@ RUN php -r "copy('https://raw.githubusercontent.com/composer/getcomposer.org/mas
 
 RUN (pecl install xdebug || pecl install xdebug-2.5.5) && docker-php-ext-enable xdebug
 
-EXPOSE 9000
 HEALTHCHECK CMD /bin/nc -z 127.0.0.1 9000

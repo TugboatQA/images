@@ -31,8 +31,9 @@ This is the primary image definition file. The following variables can be define
 * **NAME** - The name of the image to generate. If not defined, the directory name is used.
 * **FROM** - The base image to build from. If not defined, the directory name is used.
 * **SERVICE** - The name of the service tied to the `run` script (below)
-* **FILTER** - An optional filter to run against the parsed list of image tags. Usually this is used to exclude things like `rc` or `unstable` tags.
 * **GETTAGS** - An optional function to generate a list of tags for the image. Most image definitions can be parsed automatically from the dockerhub image definition, but there are some cases that need a little help. The resulting list should be comma-separated, with no spaces, one line per unique image.
+* **FILTER** - An optional filter to run against the parsed list of image tags. Usually this is used to exclude things like `rc` or `unstable` tags. This is used by the default GETTAGS function, and must be explicitly built in to a custom GETTAGS function in order to have any effect there.
+* **PACKAGES** - Which package manager is used by the base image. Valid options: apt, yum. Default: apt
 
 ### run
 

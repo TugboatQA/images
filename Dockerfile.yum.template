@@ -1,5 +1,7 @@
 FROM {{FROM}}
 
+USER root
+
 RUN yum install -y git sudo openssh-clients ca-certificates net-tools bzip2 vim-enhanced \
         make gcc gcc-c++ glibc-static && \
     \

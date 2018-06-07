@@ -10,7 +10,7 @@ function getTags() {
     echo "5.2.1,5.2"
 }
 
-NAME=elasticsearch-elastic.co
+NAME=elasticsearch
 FROM=docker.elastic.co/elasticsearch/elasticsearch
 SERVICE=elasticsearch
 GETTAGS=getTags

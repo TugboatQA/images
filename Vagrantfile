@@ -33,9 +33,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     # VM hardware settings
     config.vm.provider "virtualbox" do |vb|
-        lvmdir = File.join(Dir.home(), '.tugboat')
-        unless File.directory?(dir)
-            FileUtils.mkdir_p(dir)
+        if settings["vb"]["lvmdir"] then
+            lvmdir = settings["vb"]["lvmdir"]
+        else
+            lvmdir = File.join(Dir.home(), '.tugboat')
+        end
+
+        unless File.directory?(lvmdir)
+            FileUtils.mkdir_p(lvmdir)
         end
 
         lvm = File.join(lvmdir, 'images-lvm.vmdk')

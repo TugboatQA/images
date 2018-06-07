@@ -21,6 +21,9 @@ vb:
   ## How big (in GB) to make the LVM backend for Docker.
   lvmsize: 20
 
+  ## Where to store the LVM disk volume.
+  #lvmdir: $/.tugboat
+
   ## Method used for synced folders. The default (empty) is to use the VM
   ## Providers' file sharing method. Other valid values include nfs, smb, or
   ## rsync. See http://docs.vagrantup.com/v2/synced-folders/index.html for more

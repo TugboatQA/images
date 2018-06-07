@@ -13,6 +13,7 @@ service
 │   ├── file1
 │   └── file2
 ├── manifest
+├── README.md
 └── run
 ```
 
@@ -34,6 +35,10 @@ This is the primary image definition file. The following variables can be define
 * **GETTAGS** - An optional function to generate a list of tags for the image. Most image definitions can be parsed automatically from the dockerhub image definition, but there are some cases that need a little help. The resulting list should be comma-separated, with no spaces, one line per unique image.
 * **FILTER** - An optional filter to run against the parsed list of image tags. Usually this is used to exclude things like `rc` or `unstable` tags. This is used by the default GETTAGS function, and must be explicitly built in to a custom GETTAGS function in order to have any effect there.
 * **PACKAGES** - Which package manager is used by the base image. Valid options: apt, yum. Default: apt
+
+### README.md
+
+The build scripts automatically generate a README.md file with a list of currently supported tags. If this file exists in the service definition directory, it is appended to the end of that automatically generated README.md.
 
 ### run
 

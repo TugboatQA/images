@@ -1,32 +1,40 @@
 #!/usr/bin/env bash
 
-set -ex
-
 NAMESPACE=${NAMESPACE:-tugboat}
 
-DOCKERFILE=$1
-pushd $(dirname $DOCKERFILE)
+DIR="services/$1"
 
-echo Building docker image from $DOCKERFILE
+if [ -e "${DIR}/manifest" ]; then
+    source "${DIR}/manifest"
+fi
 
-NAME=$(cat NAME)
-TAG=$(cat TAGS | cut -d' ' -f1)
-ALIASES=$(cat TAGS | cut -d' ' -f2-)
-IMAGE=${NAMESPACE}/${NAME}:${TAG}
+NAME=${NAME:-$1}
+SERVICE=${SERVICE:-$NAME}
 
-docker build --pull -t $IMAGE .
+for DOCKERFILE in $(find "images/${SERVICE}" -name Dockerfile); do
+    pushd $(dirname $DOCKERFILE)
 
-# Strip volumes
-TEMP=$(mktemp -d)
-docker save $IMAGE | tar -C "${TEMP}" -x
-CONFIG=`jq -r '.[0].Config' "${TEMP}/manifest.json"`
-jq 'del(.config.Volumes,.config.Entrypoint)' "${TEMP}/${CONFIG}" > "${TEMP}/config.json"
-mv "${TEMP}/config.json" "${TEMP}/${CONFIG}"
-tar -C "${TEMP}" -c . | docker load
-rm -rf "${TEMP}"
+    echo Building docker image from $DOCKERFILE
 
-for ALIAS in ${ALIASES}; do
-    docker tag ${IMAGE} ${NAMESPACE}/${NAME}:${ALIAS}
+    NAME=$(cat NAME)
+    TAG=$(cat TAGS | cut -d' ' -f1)
+    ALIASES=$(cat TAGS | cut -d' ' -f2-)
+    IMAGE=${NAMESPACE}/${NAME}:${TAG}
+
+    docker build --pull -t $IMAGE .
+
+    # Strip volumes
+    TEMP=$(mktemp -d)
+    docker save $IMAGE | tar -C "${TEMP}" -x
+    CONFIG=`jq -r '.[0].Config' "${TEMP}/manifest.json"`
+    jq 'del(.config.Volumes,.config.Entrypoint)' "${TEMP}/${CONFIG}" > "${TEMP}/config.json"
+    mv "${TEMP}/config.json" "${TEMP}/${CONFIG}"
+    tar -C "${TEMP}" -c . | docker load
+    rm -rf "${TEMP}"
+
+    for ALIAS in ${ALIASES}; do
+        docker tag ${IMAGE} ${NAMESPACE}/${NAME}:${ALIAS}
+    done
+
+    popd
 done
-
-popd

@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -ex
-
 function getTags() {
     TEMP=$(mktemp -d)
     FILTER=$1
@@ -40,15 +38,15 @@ FILTER=${FILTER:-cat}
 PACKAGES=${PACKAGES:-apt}
 GETTAGS=${GETTAGS:-getTags}
 
-rm -rf "images/$1"
-mkdir -p "images/$1"
+SERVICEDIR="images/${SERVICE}"
+mkdir -p "${SERVICEDIR}"
 
-echo "# Supported tags" > "images/$1/README.md"
-echo "" >> "images/$1/README.md"
+echo "# Supported tags" > "${SERVICEDIR}/README.md"
+echo "" >> "${SERVICEDIR}/README.md"
 
 for TAGS in $($GETTAGS "${FILTER}"); do
     TAG=$(echo "${TAGS}" | cut -d, -f1)
-    IMGDIR="images/$1/${TAG}"
+    IMGDIR="${SERVICEDIR}/${TAG}"
     IMAGE="${FROM}:${TAG}"
 
     mkdir -p "${IMGDIR}"
@@ -78,10 +76,10 @@ for TAGS in $($GETTAGS "${FILTER}"); do
 
     echo "${TAGS}" | tr ',' ' ' > "${IMGDIR}/TAGS"
     echo "${NAME}" > "${IMGDIR}/NAME"
-    echo "${TAGS}" | sed 's/,/\`, \`/g' | sed 's/$/\`/' | sed 's/^/\* \`/' >> "images/$1/README.md"
+    echo "${TAGS}" | sed 's/,/\`, \`/g' | sed 's/$/\`/' | sed 's/^/\* \`/' >> "${SERVICEDIR}/README.md"
 done
 
 if [ -e "${DIR}/README.md" ]; then
-    echo "" >> "images/$1/README.md"
-    cat "${DIR}/README.md" >> "images/$1/README.md"
+    echo "" >> "${SERVICEDIR}/README.md"
+    cat "${DIR}/README.md" >> "${SERVICEDIR}/README.md"
 fi

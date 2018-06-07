@@ -13,6 +13,7 @@ RUN yum install -y git sudo openssh-clients ca-certificates net-tools bzip2 vim-
     cd /package && \
     wget http://smarden.org/runit/runit-2.1.2.tar.gz && \
     tar -zxf runit-2.1.2.tar.gz && \
+    rm runit-2.1.2.tar.gz && \
     cd admin/runit-2.1.2 && \
     package/install \
     \
@@ -20,9 +21,9 @@ RUN yum install -y git sudo openssh-clients ca-certificates net-tools bzip2 vim-
     rm -rf /tmp/* /var/tmp/*
 
 # Configure locale
-ENV LANG en_US.UTF-8
-    LANGUAGE en_US:en
-    LC_ALL en_US.UTF-8
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
 
 {{DOCKERFILE}}
 

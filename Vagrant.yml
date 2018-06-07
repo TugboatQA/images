@@ -19,7 +19,7 @@ vb:
   memory: 2048
 
   ## How big (in GB) to make the LVM backend for Docker.
-  lvmsize: 20
+  lvmsize: 40
 
   ## Where to store the LVM disk volume.
   #lvmdir: $/.tugboat

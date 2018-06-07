@@ -8,7 +8,7 @@ Each image that is generated comes from a service definition directory in `/serv
 
 ```
 service
-├── custom
+├── Dockerfile
 ├── files
 │   ├── file1
 │   └── file2
@@ -30,8 +30,9 @@ This is the primary image definition file. The following variables can be define
 
 * **NAME** - The name of the image to generate. If not defined, the directory name is used.
 * **FROM** - The base image to build from. If not defined, the directory name is used.
-* **PARSE** - An optional function to use to parse the library description for the image as provided at https://github.com/docker-library/official-images/tree/master/library. These are not standardized, so each image may need its own parser. If no parser is defined, pulling values from fields labeled `Tags:` and `SharedTags:` is used. The result of this parser should be a comma-space-separated list of tags & aliases, one line per unique image.
+* **SERVICE** - The name of the service tied to the `run` script (below)
 * **FILTER** - An optional filter to run against the parsed list of image tags. Usually this is used to exclude things like `rc` or `unstable` tags.
+* **GETTAGS** - An optional function to generate a list of tags for the image. Most image definitions can be parsed automatically from the dockerhub image definition, but there are some cases that need a little help. The resulting list should be comma-separated, with no spaces, one line per unique image.
 
 ### run
 

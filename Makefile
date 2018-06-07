@@ -8,21 +8,26 @@ all: $(ALL)
 $(SERVICES):
 	./generate $@
 	./build $@
-	docker image prune --force
 
-elasticsearch: elasticsearch-dockerhub elasticsearch-elastic.co
+elasticsearch:
+	./generate elasticsearch-dockerhub
+	./generate elasticsearch-elastic.co
 	echo "# Supported tags" > images/elasticsearch/README.md
 	echo "" >> images/elasticsearch/README.md
-	find images/elasticsearch -name TAGS | sort | xargs cat | sed 's/ /\`, \`/g' | sed 's/^/\* \`/g' | sed 's/\$$/\`/g' >> images/elasticsearch/README.md
+	find images/elasticsearch -name TAGS -r | sort | xargs cat | sed 's/ /\`, \`/g' | sed 's/^/\* \`/g' | sed 's/$$/\`/g' >> images/elasticsearch/README.md
 	echo "" >> images/elasticsearch/README.md
 	cat services/elasticsearch/README.md >> images/elasticsearch/README.md
+	./build elasticsearch
 
-php: php-apache php-fpm
+php:
+	./generate php-apache
+	./generate php-fpm
 	echo "# Supported tags" > images/php/README.md
 	echo "" >> images/php/README.md
-	find images/php -name TAGS | sort | xargs cat | sed 's/ /\`, \`/g' | sed 's/^/\* \`/g' | sed 's/\$$/\`/g' >> images/php/README.md
+	find images/php -name TAGS | sort -r | xargs cat | sed 's/ /\`, \`/g' | sed 's/^/\* \`/g' | sed 's/$$/\`/g' >> images/php/README.md
 	echo "" >> images/php/README.md
 	cat services/php/README.md >> images/php/README.md
+	./build php
 
 clean:
 	rm -rf images

@@ -40,7 +40,11 @@ FILTER=${FILTER:-cat}
 PACKAGES=${PACKAGES:-apt}
 GETTAGS=${GETTAGS:-getTags}
 
-rm -rf images/$NAME
+rm -rf "images/$1"
+mkdir -p "images/$1"
+
+echo "# Supported tags" > "images/$1/README.md"
+echo "" >> "images/$1/README.md"
 
 for TAGS in $($GETTAGS "${FILTER}"); do
     TAG=$(echo "${TAGS}" | cut -d, -f1)
@@ -74,4 +78,10 @@ for TAGS in $($GETTAGS "${FILTER}"); do
 
     echo "${TAGS}" | tr ',' ' ' > "${IMGDIR}/TAGS"
     echo "${NAME}" > "${IMGDIR}/NAME"
+    echo "${TAGS}" | sed 's/,/\`, \`/g' | sed 's/$/\`/' | sed 's/^/\* \`/' >> "images/$1/README.md"
 done
+
+if [ -e "${DIR}/README.md" ]; then
+    echo "" >> "images/$1/README.md"
+    cat "${DIR}/README.md" >> "images/$1/README.md"
+fi

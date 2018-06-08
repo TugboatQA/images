@@ -1,2 +1,2 @@
 #!/bin/sh
-exec /usr/local/bin/docker-entrypoint.sh eswrapper
+exec /usr/local/bin/docker-entrypoint.sh

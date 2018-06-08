@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-NAMESPACE=${NAMESPACE:-tugboat}
+NAMESPACE=${NAMESPACE:-tugboatqa}
 
 DIR="services/$1"
 

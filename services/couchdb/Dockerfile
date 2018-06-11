@@ -1,1 +1,1 @@
-HEALTHCHECK CMD curl -I http://127.0.0.1:5984
+HEALTHCHECK CMD /bin/nc -z 127.0.0.1 5984

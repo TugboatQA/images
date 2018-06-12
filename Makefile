@@ -31,5 +31,7 @@ php:
 
 clean:
 	rm -rf images
+
+clean-all: clean
 	docker container prune --force
 	docker image prune --all --force

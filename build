@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 NAMESPACE=${NAMESPACE:-tugboatqa}
 
 DIR="services/$1"

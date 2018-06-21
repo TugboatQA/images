@@ -10,8 +10,6 @@ RUN php -r "copy('https://raw.githubusercontent.com/composer/getcomposer.org/mas
     \
     mkdir -p /etc/service/apache && \
     echo "umask 0002" >> /etc/apache2/envvars && \
-    sed -i 's|\(^\sErrorLog\s\).*|\1/proc/self/fd/2|' /etc/apache2/sites-available/000-default.conf && \
-    sed -i 's|\(^\sCustomLog\s\).*|\1/proc/self/fd/1 combined|' /etc/apache2/sites-available/000-default.conf && \
     \
     mv ${DOCROOT} ${DOCROOT}.original && \
     ln -s ${DOCROOT}.original ${DOCROOT}

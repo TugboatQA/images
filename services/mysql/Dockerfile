@@ -7,4 +7,4 @@ ENV MYSQL_ALLOW_EMPTY_PASSWORD=true \
     MYSQL_HOST=127.0.0.1 \
     MYSQL_ROOT_HOST=%
 
-HEALTHCHECK CMD /usr/bin/mysqladmin ping
+HEALTHCHECK CMD mysql -e "show variables like 'version';"

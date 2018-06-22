@@ -5,6 +5,8 @@ RUN php -r "copy('https://raw.githubusercontent.com/composer/getcomposer.org/mas
     php -r "unlink('composer-setup.php');" && \
     mv composer.phar /usr/local/bin/composer && \
     \
-    (pecl install xdebug || pecl install xdebug-2.5.5) && docker-php-ext-enable xdebug
+    (pecl install xdebug || pecl install xdebug-2.5.5) && \
+    docker-php-ext-enable xdebug && \
+    docker-php-ext-install pdo_mysql
 
 HEALTHCHECK CMD /bin/nc -z 127.0.0.1 9000

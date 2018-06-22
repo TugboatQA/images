@@ -6,7 +6,9 @@ RUN php -r "copy('https://raw.githubusercontent.com/composer/getcomposer.org/mas
     php -r "unlink('composer-setup.php');" && \
     mv composer.phar /usr/local/bin/composer && \
     \
-    (pecl install xdebug || pecl install xdebug-2.5.5) && docker-php-ext-enable xdebug && \
+    (pecl install xdebug || pecl install xdebug-2.5.5) && \
+    docker-php-ext-enable xdebug && \
+    docker-php-ext-install pdo_mysql && \
     \
     mkdir -p /etc/service/apache && \
     echo "umask 0002" >> /etc/apache2/envvars && \
@@ -15,4 +17,6 @@ RUN php -r "copy('https://raw.githubusercontent.com/composer/getcomposer.org/mas
     ln -s ${DOCROOT}.original ${DOCROOT}
 
 COPY files/apache.runit /etc/service/apache/run
+COPY files/000-default.conf /etc/apache2/sites-available/000-default.conf
+
 HEALTHCHECK CMD /bin/nc -z 127.0.0.1 80

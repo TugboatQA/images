@@ -14,7 +14,7 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90tugboat && \
     \
     apt-get install -y \
         git locales sudo openssh-client ca-certificates tar gzip build-essential \
-        net-tools netcat unzip zip bzip2 gnupg curl wget vim ssmtp runit rsync && \
+        net-tools netcat-openbsd unzip zip bzip2 gnupg curl wget vim ssmtp runit rsync && \
     \
     echo "[user]" > ~/.gitconfig && \
     echo "    email = root@tugboat.qa" >> ~/.gitconfig && \

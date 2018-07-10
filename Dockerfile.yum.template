@@ -17,10 +17,7 @@ RUN yum install -y git sudo openssh-clients ca-certificates net-tools bzip2 vim-
     tar -zxf runit-2.1.2.tar.gz && \
     rm runit-2.1.2.tar.gz && \
     cd admin/runit-2.1.2 && \
-    package/install \
-    \
-    yum clean all -y && \
-    rm -rf /tmp/* /var/tmp/*
+    package/install
 
 # Configure locale
 ENV LANG=en_US.UTF-8 \
@@ -31,6 +28,9 @@ COPY share/README.txt /usr/share/tugboat/
 COPY share/Makefile /usr/share/tugboat/
 
 {{DOCKERFILE}}
+
+RUN yum clean all -y && \
+    rm -rf /tmp/* /var/tmp/*
 
 {{RUN}}
 

@@ -5,6 +5,7 @@ ENV MYSQL_ALLOW_EMPTY_PASSWORD=true \
     MYSQL_PASSWORD=tugboat \
     MYSQL_DATABASE=tugboat \
     MYSQL_HOST=127.0.0.1 \
-    MYSQL_ROOT_HOST=%
+    MYSQL_ROOT_HOST=% \
+    MYSQL_RANDOM_ROOT_PASSWORD=yes
 
 HEALTHCHECK CMD mysql -e "show variables like 'version';"

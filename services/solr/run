@@ -1,0 +1,2 @@
+#!/bin/sh
+chpst -u solr docker-entrypoint.sh solr-foreground

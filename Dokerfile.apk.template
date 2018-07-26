@@ -1,0 +1,11 @@
+FROM {{FROM}}
+
+USER root
+
+RUN apk add --no-cache git openssh-client runit ssmtp
+
+{{DOCKERFILE}}
+
+{{RUN}}
+
+CMD ["/sbin/runsvdir", "-P", "/etc/service"]

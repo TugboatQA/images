@@ -2,7 +2,7 @@ FROM {{FROM}}
 
 USER root
 
-RUN apk add --no-cache git openssh-client runit ssmtp
+RUN apk add --no-cache git openssh-client runit
 
 {{DOCKERFILE}}
 

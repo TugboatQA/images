@@ -22,5 +22,6 @@ RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng
 
 COPY files/apache.runit /etc/service/apache/run
 COPY files/000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY files/tugboat.ini /usr/local/etc/php/conf.d/tugboat.ini
 
 HEALTHCHECK CMD /bin/nc -z 127.0.0.1 80

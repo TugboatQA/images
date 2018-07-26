@@ -13,4 +13,6 @@ RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng
     php -r "unlink('composer-setup.php');" && \
     mv composer.phar /usr/local/bin/composer
 
+COPY files/tugboat.ini /usr/local/etc/php/conf.d/sendmail.ini
+
 HEALTHCHECK CMD /bin/nc -z 127.0.0.1 9000

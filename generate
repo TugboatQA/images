@@ -16,7 +16,7 @@ function getTags() {
             sort | \
             sed 's/^.*Tags: //g' | \
             sed 'N;s/\n/, /g' | \
-            grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver | \
+            grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver -e beta | \
             ${FILTER} | \
             sed 's/, /,/g'
     done

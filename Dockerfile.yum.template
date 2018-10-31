@@ -3,7 +3,7 @@ FROM {{FROM}}
 USER root
 
 RUN yum install -y git sudo openssh-clients ca-certificates net-tools bzip2 vim-enhanced \
-        nmap-ncat make gcc gcc-c++ glibc-static rsync && \
+        nmap-ncat make gcc gcc-c++ glibc-static rsync wget tar && \
     \
     echo "[user]" > ~/.gitconfig && \
     echo "    email = root@tugboat.qa" >> ~/.gitconfig && \

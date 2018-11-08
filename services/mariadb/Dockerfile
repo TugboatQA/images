@@ -7,4 +7,4 @@ ENV MYSQL_ALLOW_EMPTY_PASSWORD=true \
     MYSQL_HOST=localhost \
     MYSQL_ROOT_HOST=localhost
 
-HEALTHCHECK CMD /usr/bin/mysqladmin ping
+HEALTHCHECK CMD /bin/nc -z 127.0.0.1 3306

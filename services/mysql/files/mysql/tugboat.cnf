@@ -11,3 +11,6 @@ innodb_log_file_size           = 5242880
 innodb_buffer_pool_size        = 134217728
 innodb_use_native_aio          = 0
 innodb_file_per_table
+
+innodb_file_format = BARRACUDA
+innodb_large_prefix = 1

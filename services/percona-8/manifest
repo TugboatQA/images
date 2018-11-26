@@ -1,0 +1,4 @@
+NAME=percona
+FROM=percona
+PACKAGES=yum
+FILTER="grep ^8"

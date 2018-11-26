@@ -1,5 +1,5 @@
-ALL = $(shell ls services | grep -v -e elasticsearch- -e php-)
-SERVICES = $(shell ls services | grep -v -e php\$$ -e elasticsearch\$$)
+ALL = $(shell ls services | grep -v -e elasticsearch- -e percona- -e php-)
+SERVICES = $(shell ls services | grep -v -e elasticsearch\$$ -e percona\$$ -e php\$$)
 
 .PHONY: all clean $(SERVICES)
 
@@ -13,6 +13,11 @@ elasticsearch:
 	./generate elasticsearch-dockerhub
 	./generate elasticsearch-elastic.co
 	./build elasticsearch
+
+percona:
+	./generate percona-5
+	./generate percona-8
+	./build percona
 
 php:
 	./generate php-apache

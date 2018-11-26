@@ -1,2 +1,2 @@
 #!/bin/sh
-exec docker-entrypoint.sh mysqld --user=root
+exec /docker-entrypoint.sh mysqld --user=root

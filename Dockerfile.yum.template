@@ -10,8 +10,9 @@ RUN yum install -y git sudo openssh-clients ca-certificates net-tools bzip2 vim-
     echo "    name = Tugboat" >> ~/.gitconfig && \
     ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
     \
-    mkdir /package && \
     mkdir -p /etc/service && \
+    ln -s /etc/service /service && \
+    mkdir /package && \
     cd /package && \
     wget http://smarden.org/runit/runit-2.1.2.tar.gz && \
     tar -zxf runit-2.1.2.tar.gz && \

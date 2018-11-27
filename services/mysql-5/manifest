@@ -1,3 +1,0 @@
-NAME=mysql
-FROM=mysql
-FILTER="grep ^5"

@@ -14,19 +14,14 @@ if File.exists?("#{dir}/Vagrant.local.yml")
     settings["vb"].merge!(local["vb"])
 end
 
-BOX = "ubuntu/trusty64"
-
 ################################################################################
 
 # Require vagrant 1.8.1 or higher
 Vagrant.require_version ">= 1.8.1"
 
-# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
-VAGRANTFILE_API_VERSION = "2"
-
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+Vagrant.configure(2) do |config|
     config.vm.hostname="tugboat-images.local"
-    config.vm.box = BOX
+    config.vm.box = "ubuntu/trusty64"
 
     # Network settings
     config.vm.network settings["vb"]["network"], bridge: settings["vb"]["bridge"], type: "dhcp"

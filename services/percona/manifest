@@ -1,0 +1,3 @@
+NAME=percona
+FROM=percona
+PACKAGES=yum

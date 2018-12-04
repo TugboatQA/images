@@ -4,4 +4,5 @@ RUN apt update && \
   varnish-modules \
   && rm -rf /var/cache/apt
 
-HEALTHCHECK CMD /bin/nc -z 127.0.0.1 80
+# Check the Varnish administration interface
+HEALTHCHECK CMD /bin/nc -z 127.0.0.1 6082

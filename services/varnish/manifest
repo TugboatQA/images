@@ -2,7 +2,6 @@ FROM=ubuntu
 SERVICE=varnish
 
 function getTags() {
-  echo xenial,3 \
-    bionic,5 \
+  echo bionic,5 \
     cosmic,5
 }

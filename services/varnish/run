@@ -1,0 +1,9 @@
+#!/bin/sh
+# Listen on port 80, administration on localhost:6082, and forward to
+# one content server selected by the vcl file, based on the request.
+exec docker-entrypoint.sh varnishd \
+  -a :80 \
+  -T localhost:6082 \
+  -f /etc/varnish/default.vcl \
+  -S /etc/varnish/secret \
+  -s file,/var/lib/varnish/$INSTANCE/varnish_storage.bin,1G"

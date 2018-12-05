@@ -1,7 +1,9 @@
-RUN apt update && \
+RUN curl -L https://packagecloud.io/varnishcache/varnish60lts/gpgkey | sudo apt-key add - && \
+  echo 'deb https://packagecloud.io/varnishcache/varnish60lts/ubuntu/ bionic main' >> /etc/apt/sources.list.d/varnishcache_varnish60lts.list && \
+  echo 'deb-src https://packagecloud.io/varnishcache/varnish60lts/ubuntu/ bionic main' >> /etc/apt/sources.list.d/varnishcache_varnish60lts.list && \
+  apt update && \
   apt install -y \
   varnish \
-  varnish-modules \
   && rm -rf /var/cache/apt
 
 # This is the common entrypoint script used by official images.

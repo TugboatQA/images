@@ -1,2 +1,3 @@
 #!/bin/sh
+cd /var/www/html
 exec /run.sh supervisord -n -j /supervisord.pid

@@ -41,4 +41,4 @@ for DOCKERFILE in $(find "images/${SERVICE}" -name Dockerfile); do
     popd
 done
 
-docker image prune --force
+# docker image prune --force

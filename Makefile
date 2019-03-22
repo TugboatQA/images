@@ -14,6 +14,10 @@ elasticsearch:
 	./generate elasticsearch-elastic.co
 	./build elasticsearch
 
+varnish:
+	./generate-from-ubuntu varnish
+	./build varnish
+
 php:
 	./generate php-apache
 	./generate php-fpm

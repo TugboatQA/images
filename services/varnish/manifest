@@ -1,0 +1,7 @@
+FROM=ubuntu
+SERVICE=varnish
+
+function getTags() {
+  # Build against Ubuntu 18.04 with Varnish 6.
+  echo bionic,6,latest
+}

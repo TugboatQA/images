@@ -15,4 +15,4 @@ NAME=elasticsearch
 FROM=docker.elastic.co/elasticsearch/elasticsearch
 SERVICE=elasticsearch
 GETTAGS=getTags
-PACKAGES=yum
+TEMPLATE=yum

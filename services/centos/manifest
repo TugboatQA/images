@@ -1,2 +1,2 @@
 NAME=centos
-PACKAGES=yum
+TEMPLATE=yum

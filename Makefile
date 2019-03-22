@@ -1,5 +1,5 @@
 ALL = $(shell ls services | grep -v -e elasticsearch- -e php-) elasticsearch php
-SERVICES = $(shell ls services | grep -v -e elasticsearch\$$ -e php\$$ -e varnish\$$)
+SERVICES = $(shell ls services | grep -v -e elasticsearch\$$ -e php\$$)
 
 .PHONY: all clean $(SERVICES)
 
@@ -13,10 +13,6 @@ elasticsearch:
 	./generate elasticsearch-dockerhub
 	./generate elasticsearch-elastic.co
 	./build elasticsearch
-
-varnish:
-	./generate-from-ubuntu varnish
-	./build varnish
 
 php:
 	./generate php-apache

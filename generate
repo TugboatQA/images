@@ -35,7 +35,7 @@ NAME=${NAME:-$1}
 FROM=${FROM:-$NAME}
 SERVICE=${SERVICE:-$NAME}
 FILTER=${FILTER:-cat}
-PACKAGES=${PACKAGES:-apt}
+TEMPLATE=${TEMPLATE:-apt}
 GETTAGS=${GETTAGS:-getTags}
 
 SERVICEDIR="images/${SERVICE}"
@@ -65,7 +65,7 @@ for TAGS in $($GETTAGS "${FILTER}"); do
         cp -r "${DIR}/files" "${IMGDIR}/"
     fi
 
-    cat Dockerfile.${PACKAGES}.template | \
+    cat Dockerfile.${TEMPLATE}.template | \
         sed "s|{{FROM}}|${IMAGE}|g" | \
         sed "/{{DOCKERFILE}}/ r ${DOCKERFILE}" | \
         sed "/{{DOCKERFILE}}/d" | \

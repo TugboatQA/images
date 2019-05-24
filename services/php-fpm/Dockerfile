@@ -1,4 +1,6 @@
-ENV COMPOSER_NO_INTERACTION=1
+ENV COMPOSER_NO_INTERACTION=1 \
+    COMPOSER_DISCARD_CHANGES=1 \
+    COMPOSER_ALLOW_SUPERUSER=1
 
 RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng-dev mysql-client && \
     \

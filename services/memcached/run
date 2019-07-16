@@ -1,2 +1,2 @@
 #!/bin/sh
-exec docker-entrypoint.sh memcached -u memcache
+exec docker-entrypoint.sh memcached -u memcache -m 256

@@ -1,7 +1,7 @@
 # Tugboat Service Images
 
 This repository contains the scripts used to generate the Docker images used by
-Tugboat Services. All of the images generated here extend the Dockerhub
+[Tugboat](https://tugboat.qa) Services. All of the images generated here extend the Dockerhub
 "Official Images"
 
 ## Service Definitions

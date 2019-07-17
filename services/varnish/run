@@ -5,5 +5,4 @@ exec docker-entrypoint.sh varnishd \
   -F \
   -a :80 \
   -T localhost:6082 \
-  -f /etc/varnish/default.vcl \
-  -s "file,/var/lib/varnish/varnish_storage.bin,1G"
+  -f /etc/varnish/default.vcl

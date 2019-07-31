@@ -20,6 +20,7 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90tugboat && \
         git locales sudo openssh-client ca-certificates tar gzip build-essential \
         net-tools netcat-openbsd unzip zip bzip2 gnupg curl wget vim runit \
         rsync apt-transport-https && \
+    (apt-get install -y ssmtp || apt-get install -y msmtp-mta) && \
     (grep Linux\ 7 /etc/issue && apt-get -t wheezy-backports install -y git || /bin/true) && \
     \
     echo "[user]" > ~/.gitconfig && \

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+DIR="images/$1"
+
+echo "## Supported Tags"
+echo ""
+
+cat ${DIR}/*/TAGS | sort -r | sed 's/\ /`,\ `/g' | sed 's/^/*\ `/g' | sed 's/$/`/g'
+
+echo ""
+echo "A full list of tags, included those that are no longer supported, can be found at"
+echo "https://hub.docker.com/r/tugboatqa/$1/tags/"

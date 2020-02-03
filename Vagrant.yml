@@ -1,5 +1,9 @@
 vb:
 
+  ## Which vagrant box to use. A Debian-based image is assumed by the
+  ## provisioning scripts.
+  box: debian/contrib-buster64
+
   ## Which type of network to use to access the VMs. Use "public_network" if
   ## you want bridged interfaces to your local network.
   network: private_network
@@ -9,20 +13,11 @@ vb:
   ## bridge to. A default interface can be specified here
   #bridge: Default Interface
 
-  ## The subnet to pull private_network NATs from.
-  subnet: 172.27.0.0/16
-
   ## Number of CPUs to give each VM.
   cpus: 1
 
   ## How much memory (in MB) to give each VM.
   memory: 2048
-
-  ## How big (in GB) to make the LVM backend for Docker.
-  lvmsize: 40
-
-  ## Where to store the LVM disk volume.
-  #lvmdir: $/.tugboat
 
   ## Method used for synced folders. The default (empty) is to use the VM
   ## Providers' file sharing method. Other valid values include nfs, smb, or

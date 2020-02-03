@@ -16,54 +16,59 @@ end
 
 ################################################################################
 
+$packages = <<SCRIPT
+#!/bin/bash
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+apt-get install -yq \
+    avahi-daemon \
+    curl \
+    git \
+    jq \
+    software-properties-common
+SCRIPT
+
+$docker = <<SCRIPT
+#/bin/bash
+export DEBIAN_FRONTEND=noninteractive
+
+# Docker repository
+curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+apt-get update
+
+# Install docker
+apt-get install -yq docker-ce
+
+# Add the vagrant user to the docker group
+usermod -a -G docker vagrant
+SCRIPT
+
+################################################################################
+
 # Require vagrant 1.8.1 or higher
 Vagrant.require_version ">= 1.8.1"
 
 Vagrant.configure(2) do |config|
     config.vm.hostname="tugboat-images.local"
-    config.vm.box = "ubuntu/trusty64"
+    config.vm.box = settings["vb"]["box"]
 
     # Network settings
     config.vm.network settings["vb"]["network"], bridge: settings["vb"]["bridge"], type: "dhcp"
 
     # VM hardware settings
     config.vm.provider "virtualbox" do |vb|
-        if settings["vb"]["lvmdir"] then
-            lvmdir = settings["vb"]["lvmdir"]
-        else
-            lvmdir = File.join(Dir.home(), '.tugboat')
-        end
-
-        unless File.directory?(lvmdir)
-            FileUtils.mkdir_p(lvmdir)
-        end
-
-        lvm = File.join(lvmdir, 'images-lvm.vmdk')
-        unless File.exists?(lvm)
-            vb.customize ["createhd", "--filename", lvm, "--size", settings["vb"]["lvmsize"] * 1024]
-        end
-
-        vb.customize ["storageattach", :id, "--storagectl", "SATAController", "--port", 1, "--device", 0, "--type", "hdd", "--medium", lvm]
-
         vb.customize ["modifyvm", :id, "--memory", settings["vb"]["memory"]]
         vb.customize ["modifyvm", :id, "--cpus", settings["vb"]["cpus"]]
-        vb.customize ["modifyvm", :id, "--natnet1", settings["vb"]["subnet"]]
     end
 
     # Disable IPv6
     config.vm.provision "shell", inline: "sysctl -w net.ipv6.conf.all.disable_ipv6=1", run: "always"
     config.vm.provision "shell", inline: "sysctl -w net.ipv6.conf.default.disable_ipv6=1", run: "always"
 
-    # Run aptitude update before other provisioning takes place
-    config.vm.provision "shell", inline: "if [[ ! -f /var/cache/apt/vagrant || ! -f /var/cache/apt/pkgcache.bin || $(stat -L --format %Y /var/cache/apt/pkgcache.bin) -le $(( $(date +%s) - 86400 )) ]]; then aptitude update; touch /var/cache/apt/vagrant; fi"
-
-    # Local Puppet provisioner
-    config.vm.provision "puppet" do |puppet|
-        puppet.module_path = ".puppet/modules"
-        puppet.manifests_path = ".puppet"
-        puppet.manifest_file = "vagrant.pp"
-        puppet.options = "--verbose --show_diff --hiera_config /vagrant/.puppet/hiera.yaml"
-    end
+    config.vm.provision "shell", inline: $packages
+    config.vm.provision "shell", inline: $docker
 
     # Add defined SSH public key to vagrant user's authorized_keys
     if settings["vb"]["sshkey"]

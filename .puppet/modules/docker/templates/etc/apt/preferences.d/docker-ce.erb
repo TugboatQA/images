@@ -1,7 +1,0 @@
-## THIS FILE IS MANAGED BY PUPPET
-
-<%- if @ensure != "present" -%>
-Package: docker-ce
-Pin: version <%= @ensure %>
-Pin-Priority: 1001
-<%- end -%>

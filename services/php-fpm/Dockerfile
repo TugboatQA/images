@@ -12,9 +12,9 @@ RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng
         docker-php-ext-configure gd --with-jpeg=/usr/include/) && \
     docker-php-ext-install -j$(nproc) gd iconv pdo_mysql && \
     \
-    (pecl install xdebug || pecl install xdebug-2.5.5 || pecl install xdebug-2.8.0beta2) && \
+    (((pecl install xdebug || pecl install xdebug-2.5.5 || pecl install xdebug-2.8.0beta2) && \
     bash -c "(pecl install mcrypt <<< '' || pecl install mcrypt-1.0.1 <<< '' || docker-php-ext-install mcrypt || /bin/true)" && \
-    (docker-php-ext-enable mcrypt || /bin/true) && \
+    (docker-php-ext-enable mcrypt || /bin/true)) || /bin/true) && \
     \
     php -r "copy('https://raw.githubusercontent.com/composer/getcomposer.org/master/web/installer', 'composer-setup.php');" && \
     php composer-setup.php && \

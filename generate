@@ -12,7 +12,8 @@ function getTags() {
     # Parse each image definition individually.
     for IMAGE in `ls "${TEMP}"`; do
         cat "${TEMP}/${IMAGE}" | \
-            grep ^Tags | \
+            grep '^Tags\|^SharedTags' | \
+            sed -z 's/\nSharedTags:/,/g' | \
             sort | \
             sed 's/^.*Tags: //g' | \
             grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver -e alpha -e beta | \

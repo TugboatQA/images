@@ -1,4 +1,4 @@
-COPY files/docker-entirypoint-initdb.d /docker-entrypoint-initdb.d
+COPY files/docker-entrypoint-initdb.d /docker-entrypoint-initdb.d
 
 ENV POSTGRES_DB=tugboat
 ENV POSTGRES_PASSWORD=tugboat

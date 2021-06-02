@@ -1,0 +1,30 @@
+function getRubyAlpineTags() {
+    TEMP=$(mktemp -d)
+    FILTER=$1
+
+    # Get the official image config, split them into separate temp files
+    SOURCE="${SOURCE:-https://raw.githubusercontent.com/docker-library/official-images/master/library/${NAME}}"
+    curl --silent --location --fail --retry 3 "${SOURCE}" | \
+        awk -v TEMP="$TEMP" -v RS= '{ print > (TEMP"/image" ++CNT) }'
+
+    # Parse each image definition individually.
+    for IMAGE in `ls "${TEMP}"`; do
+        cat "${TEMP}/${IMAGE}" | \
+            grep '^Tags\|^SharedTags' | \
+            sed -z 's/\nSharedTags:/,/g' | \
+            sort | \
+            sed 's/^.*Tags: //g' | \
+            grep -v -E -e '^v1\.[0-9\.]+,' -e buster -e stretch | \
+            ${FILTER} | \
+            sed 's/, /,/g'
+    done
+
+    # Clean up
+    rm -rf "${TEMP}"
+}
+
+NAME="ruby"
+FROM="ruby"
+TEMPLATE=apk
+GETTAGS=getRubyAlpineTags
+FILTER="grep -e alpine"

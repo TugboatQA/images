@@ -1,5 +1,5 @@
-ALL = $(shell ls services | grep -v -e elasticsearch- -e php-) elasticsearch php
-SERVICES = $(shell ls services | grep -v -e elasticsearch\$$ -e php\$$)
+ALL = $(shell ls services | grep -v -e elasticsearch- -e php- -e ruby-) elasticsearch php ruby
+SERVICES = $(shell ls services | grep -v -e elasticsearch\$$ -e php\$$ -e ruby\$$)
 
 .PHONY: all clean $(SERVICES)
 
@@ -21,6 +21,12 @@ php:
 	./generate php-fpm
 	./build php
 	./tags php > images/php/TAGS.md
+
+ruby:
+	./generate ruby-debian
+	./generate ruby-alpine
+	./build ruby
+	./tags ruby > images/ruby/TAGS.md
 
 clean:
 	rm -rf images

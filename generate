@@ -69,7 +69,7 @@ for TAGS in $($GETTAGS "${FILTER}"); do
         sed "s|{{FROM}}|${IMAGE}|g" | \
         sed "/{{DOCKERFILE}}/ r ${DOCKERFILE}" | \
         sed "/{{DOCKERFILE}}/d" | \
-        sed "s|{{RUN}}|${RUN}|g" \
+        awk '{ gsub("{{RUN}}", "'"${RUN}"'", $0); print $0 }' \
         > "${IMGDIR}/Dockerfile"
 
     echo "${TAGS}" | tr ',' ' ' > "${IMGDIR}/TAGS"

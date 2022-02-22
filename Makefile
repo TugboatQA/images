@@ -1,5 +1,5 @@
-ALL = $(shell ls services | grep -v -e elasticsearch- -e php-) elasticsearch php
-SERVICES = $(shell ls services | grep -v -e elasticsearch\$$ -e php\$$)
+ALL = $(shell ls services | grep -v -e elasticsearch- -e php- -e percona) elasticsearch php
+SERVICES = $(shell ls services | grep -v -e elasticsearch\$$ -e php\$$ -e percona)
 
 .PHONY: all clean $(SERVICES)
 

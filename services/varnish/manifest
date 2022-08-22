@@ -1,8 +1,1 @@
-FROM=ubuntu
-SERVICE=varnish
-TEMPLATE=none
-
-function getTags() {
-  # Build against Ubuntu with Varnish 6.
-  echo "6,latest"
-}
+NAME=varnish

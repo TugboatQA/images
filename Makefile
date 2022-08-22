@@ -5,18 +5,18 @@ SERVICES = $(shell ls services | grep -v -e elasticsearch\$$ -e php\$$)
 
 all: $(ALL)
 
-$(SERVICES):
+$(SERVICES): sed
 	./generate $@
 	./build $@
 	./tags $@ > images/$@/TAGS.md
 
-elasticsearch:
+elasticsearch: sed
 	./generate elasticsearch-dockerhub
 	./generate elasticsearch-elastic.co
 	./build elasticsearch
 	./tags elasticsearch > images/elasticsearch/TAGS.md
 
-php:
+php: sed
 	./generate php-apache
 	./generate php-fpm
 	./build php
@@ -28,3 +28,7 @@ clean:
 clean-all: clean
 	docker container prune --force
 	docker image prune --all --force
+
+.PHONY: sed
+sed:
+	@sed --version >/dev/null 2>&1 || (echo "You must install gnu sed." && exit 1)

@@ -2,7 +2,7 @@ ENV COMPOSER_NO_INTERACTION=1 \
     COMPOSER_DISCARD_CHANGES=1 \
     COMPOSER_ALLOW_SUPERUSER=1
 
-RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng-dev && \
+RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng-dev libwebp-dev && \
     (apt-get install -y mysql-client || apt-get install -y mariadb-client) && \
     \
     (docker-php-ext-configure gd --with-freetype-dir=/usr/include/ && \
@@ -10,6 +10,7 @@ RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng
         docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ || \
         docker-php-ext-configure gd --with-jpeg-dir=/usr/include/ || \
         docker-php-ext-configure gd --with-jpeg=/usr/include/) && \
+    docker-php-ext-configure gd --with-webp && \
     docker-php-ext-install -j$(nproc) gd iconv pdo_mysql && \
     \
     (((pecl install xdebug || pecl install xdebug-2.5.5 || pecl install xdebug-2.8.0beta2) && \

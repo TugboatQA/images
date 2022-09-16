@@ -10,7 +10,7 @@ RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng
         docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ || \
         docker-php-ext-configure gd --with-jpeg-dir=/usr/include/ || \
         docker-php-ext-configure gd --with-jpeg=/usr/include/) && \
-        docker-php-ext-configure gd --with-webp && \
+    docker-php-ext-configure gd --with-webp && \
     docker-php-ext-install -j$(nproc) gd iconv pdo_mysql && \
     \
     (((pecl install xdebug || pecl install xdebug-2.5.5 || pecl install xdebug-2.8.0beta2) && \

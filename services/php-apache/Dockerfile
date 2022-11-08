@@ -1,7 +1,8 @@
 ENV COMPOSER_NO_INTERACTION=1 \
     COMPOSER_DISCARD_CHANGES=1 \
     COMPOSER_ALLOW_SUPERUSER=1 \
-    DOCROOT=/var/www/html
+    DOCROOT=/var/www/html \
+    PATH="${PATH}:${TUGBOAT_ROOT}/vendor/bin"
 
 RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng-dev libwebp-dev && \
     (apt-get install -y mysql-client || apt-get install -y mariadb-client) && \

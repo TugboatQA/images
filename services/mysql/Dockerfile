@@ -1,4 +1,4 @@
-COPY files/mysql/tugboat.cnf /etc/mysql/conf.d/tugboat.cnf
+COPY --chmod=644 files/mysql/tugboat.cnf /etc/mysql/conf.d/tugboat.cnf
 
 ENV MYSQL_ALLOW_EMPTY_PASSWORD=true \
     MYSQL_USER=tugboat \

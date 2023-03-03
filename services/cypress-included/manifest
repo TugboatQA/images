@@ -7,3 +7,4 @@ function getTags() {
 NAME=cypress-included
 FROM=cypress/included
 SERVICE=cypress-included
+FILTER="grep -v -e ^cypress"

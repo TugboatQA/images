@@ -43,5 +43,5 @@ done
 
 if [[ "$push_and_rm" = 1 ]]; then
     docker push --all-tags "${NAMESPACE}/${NAME}"
-    docker image rm "${NAMESPACE}/${NAME}"
+    docker rmi --force "$(docker images ls --filter=reference="${NAMESPACE}/${NAME}" -q | sort | uniq)"
 fi

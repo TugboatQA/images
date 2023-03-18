@@ -41,4 +41,7 @@ for DOCKERFILE in $(find "images/${SERVICE}" -name Dockerfile); do
     popd
 done
 
-# docker image prune --force
+if [[ "$push_and_rm" = 1 ]]; then
+    docker push --all-tags "${NAMESPACE}/${NAME}"
+    docker image rm "${NAMESPACE}/${NAME}"
+fi

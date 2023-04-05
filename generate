@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
 
+# Support running scripts on macOS. If these scripts are refactored, consider
+# rewriting the sed commands in perl to avoid this check.
+SED=sed
+if [[ $(uname) != "Linux" ]]; then
+    if ! hash gsed > /dev/null; then
+        echo "GNU sed is required on macOS and BSD. On macOS, install it with brew install coreutils."
+        exit 1
+    fi
+    SED=gsed
+fi
+
 function getTags() {
     TEMP=$(mktemp -d)
     FILTER=$1
@@ -13,12 +24,12 @@ function getTags() {
     for IMAGE in `ls "${TEMP}"`; do
         cat "${TEMP}/${IMAGE}" | \
             grep '^Tags\|^SharedTags' | \
-            sed -z 's/\nSharedTags:/,/g' | \
+            $SED -z 's/\nSharedTags:/,/g' | \
             sort | \
-            sed 's/^.*Tags: //g' | \
+            $SED 's/^.*Tags: //g' | \
             grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver -e alpha -e beta | \
             ${FILTER} | \
-            sed 's/, /,/g'
+            $SED 's/, /,/g'
     done
 
     # Clean up
@@ -66,12 +77,14 @@ for TAGS in $($GETTAGS "${FILTER}"); do
     fi
 
     cat Dockerfile.${TEMPLATE}.template | \
-        sed "s|{{FROM}}|${IMAGE}|g" | \
-        sed "/{{DOCKERFILE}}/ r ${DOCKERFILE}" | \
-        sed "/{{DOCKERFILE}}/d" | \
-        sed "s|{{RUN}}|${RUN}|g" \
+        $SED "s|{{FROM}}|${IMAGE}|g" | \
+        $SED "/{{DOCKERFILE}}/ r ${DOCKERFILE}" | \
+        $SED "/{{DOCKERFILE}}/d" | \
+        $SED "s|{{RUN}}|${RUN}|g" \
         > "${IMGDIR}/Dockerfile"
 
     echo "${TAGS}" | tr ',' ' ' > "${IMGDIR}/TAGS"
     echo "${NAME}" > "${IMGDIR}/NAME"
 done
+
+echo "Dockerfiles generated."

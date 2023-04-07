@@ -10,10 +10,9 @@ function getTags() {
         awk -v TEMP="$TEMP" -v RS= '{ print > (TEMP"/image" ++CNT) }'
 
     # Parse each image definition individually.
-    for IMAGE in `ls "${TEMP}"`; do
-        cat "${TEMP}/${IMAGE}" | \
-            grep '^Tags\|^SharedTags' | \
-            sed -z 's/\nSharedTags:/,/g' | \
+    for FILE in "$TEMP"/*; do
+        grep '^Tags\|^SharedTags' "${FILE}" | \
+            perl -pe 's/\nSharedTags:/,/g' | \
             sort | \
             sed 's/^.*Tags: //g' | \
             grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver -e alpha -e beta | \
@@ -69,7 +68,7 @@ for TAGS in $($GETTAGS "${FILTER}"); do
         sed "s|{{FROM}}|${IMAGE}|g" | \
         sed "/{{DOCKERFILE}}/ r ${DOCKERFILE}" | \
         sed "/{{DOCKERFILE}}/d" | \
-        sed "s|{{RUN}}|${RUN}|g" \
+        perl -pe "s|\{\{RUN\}\}|${RUN}|g" \
         > "${IMGDIR}/Dockerfile"
 
     echo "${TAGS}" | tr ',' ' ' > "${IMGDIR}/TAGS"

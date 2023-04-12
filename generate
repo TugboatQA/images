@@ -11,12 +11,13 @@ function getTags() {
 
     # Parse each image definition individually.
     for FILE in "$TEMP"/*; do
-        grep '^Tags\|^SharedTags' "${FILE}" | \
-            perl -pe 's/\nSharedTags:/,/g' | \
-            sort | \
-            sed 's/^.*Tags: //g' | \
-            grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver -e alpha -e beta | \
-            ${FILTER} | \
+        grep '^Tags\|^SharedTags' "${FILE}" |
+            tr '\n' ';' |
+            perl -pe 's/;SharedTags:/,/g;' -e 's/;/\n/g' |
+            sort |
+            sed 's/^.*Tags: //g' |
+            grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver -e alpha -e beta |
+            ${FILTER} |
             sed 's/, /,/g'
     done
 

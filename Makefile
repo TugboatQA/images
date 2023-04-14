@@ -5,13 +5,12 @@ export DOCKER_BUILDKIT ?= 1
 # the image, you may set this environment variable to 1.
 export push_and_rm ?= 0
 
-.PHONY: all clean $(ALL)
+.PHONY: all clean $(ALL) php-nginx
 .PARALLEL: $(ALL)
 
 all: $(ALL)
 
 php-nginx: php-fpm-nginx
-	.PHONY
 
 $(SERVICES):
 	./generate $@

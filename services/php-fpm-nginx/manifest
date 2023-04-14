@@ -1,0 +1,11 @@
+# Override getTags() to always point to the php image, not an invalid
+# php-fpm-nginx image.
+
+function getTagsPhp() {
+    NAME=php
+    getTags "${FILTER}"
+}
+
+FROM=php
+FILTER="grep fpm"
+GETTAGS=getTagsPhp

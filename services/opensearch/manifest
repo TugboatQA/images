@@ -1,0 +1,9 @@
+function getTags() {
+  weeks=8
+  ((newer_than=$weeks*7*24*60*60))
+  curl -Ls https://registry.hub.docker.com/v2/repositories/opensearchproject/opensearch/tags?page_size=1024 |
+    jq -r '[.results[] | select((.images | length) > 0 and (.last_updated | sub("\\.[0-9]+Z"; "Z") | fromdate) > (now - '"$newer_than"')) | {name: .name, digest: .images[0].digest}] | group_by(.digest) | map([.[].name] | join(",")) | .[]'
+}
+NAME=opensearch
+FROM=opensearchproject/opensearch
+TEMPLATE=yum

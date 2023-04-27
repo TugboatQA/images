@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+export DISABLE_SECURITY_PLUGIN=true
+export DISABLE_INSTALL_DEMO_CONFIG=true
+
+cd /usr/share/opensearch
+chpst -u opensearch ./opensearch-docker-entrypoint.sh opensearch

@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+cd /home/dynamodblocal
+exec java -jar DynamoDBLocal.jar -sharedDb -dbPath ./data

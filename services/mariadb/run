@@ -1,2 +1,2 @@
 #!/bin/sh
-exec docker-entrypoint.sh mysqld
+exec docker-entrypoint.sh mariadbd

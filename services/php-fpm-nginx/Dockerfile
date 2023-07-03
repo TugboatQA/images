@@ -23,18 +23,16 @@ RUN mv /etc/apt/apt.conf.d/docker-clean /etc/apt/docker-clean-disabled && \
     (apt-get install -y mysql-client || apt-get install -y mariadb-client) && \
     docker-php-ext-configure gd --with-jpeg --with-freetype --with-webp && \
     docker-php-ext-install -j$(nproc) gd iconv pdo_mysql && \
-    \
     (((pecl install xdebug || pecl install xdebug-2.5.5 || pecl install xdebug-2.8.0beta2) && \
     bash -c "(pecl install mcrypt <<< '' || pecl install mcrypt-1.0.1 <<< '' || docker-php-ext-install mcrypt || /bin/true)" && \
     (docker-php-ext-enable mcrypt || /bin/true)) || /bin/true) && \
-    \
     php -r "copy('https://raw.githubusercontent.com/composer/getcomposer.org/master/web/installer', 'composer-setup.php');" && \
     php composer-setup.php && \
     php -r "unlink('composer-setup.php');" && \
     mv composer.phar /usr/local/bin/composer && \
     mv /root/php-fpm-run /etc/service/php-fpm/run && \
     mv /root/tugboat.ini /usr/local/etc/php/conf.d/tugboat.ini && \
-  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+   --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
     apt-get install -y nginx && \

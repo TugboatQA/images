@@ -32,7 +32,7 @@ RUN mv /etc/apt/apt.conf.d/docker-clean /etc/apt/docker-clean-disabled && \
     mv composer.phar /usr/local/bin/composer && \
     mv /root/php-fpm-run /etc/service/php-fpm/run && \
     mv /root/tugboat.ini /usr/local/etc/php/conf.d/tugboat.ini && \
-   --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
     apt-get install -y nginx && \

@@ -9,20 +9,11 @@ COPY files/tugboat.ini /root/tugboat.ini
 COPY files/nginx.conf /root/nginx.conf
 COPY files/sites-enabled/* /root/sites-enabled/
 
-# Debian images by default disable apt caching, so turn it on until we finish
-# the build.
-
-# sharing=locked prevents concurrent builds from accessing this cache at the
-# same time. To improve build performance, we ensure we only run apt related
-# commands in this layer.
-RUN mv /etc/apt/apt.conf.d/docker-clean /etc/apt/docker-clean-disabled && \
-    --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
-    apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng-dev libwebp-dev && \
+RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng-dev libwebp-dev nginx && \
     (apt-get install -y mysql-client || apt-get install -y mariadb-client) && \
     docker-php-ext-configure gd --with-jpeg --with-freetype --with-webp && \
     docker-php-ext-install -j$(nproc) gd iconv pdo_mysql && \
+    \
     (((pecl install xdebug || pecl install xdebug-2.5.5 || pecl install xdebug-2.8.0beta2) && \
     bash -c "(pecl install mcrypt <<< '' || pecl install mcrypt-1.0.1 <<< '' || docker-php-ext-install mcrypt || /bin/true)" && \
     (docker-php-ext-enable mcrypt || /bin/true)) || /bin/true) && \
@@ -30,13 +21,9 @@ RUN mv /etc/apt/apt.conf.d/docker-clean /etc/apt/docker-clean-disabled && \
     php composer-setup.php && \
     php -r "unlink('composer-setup.php');" && \
     mv composer.phar /usr/local/bin/composer && \
+    mkdir -p /etc/service/php-fpm && \
     mv /root/php-fpm-run /etc/service/php-fpm/run && \
     mv /root/tugboat.ini /usr/local/etc/php/conf.d/tugboat.ini && \
-    --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
-    apt-get install -y nginx && \
-    mv /etc/apt/docker-clean-disabled /etc/apt/apt.conf.d/docker-clean && \
     mv ${DOCROOT} ${DOCROOT}.original && \
     ln -s ${DOCROOT}.original ${DOCROOT} && \
     mkdir -p /var/lib/tugboat/web && \

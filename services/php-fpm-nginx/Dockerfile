@@ -15,7 +15,7 @@ COPY files/sites-enabled/* /root/sites-enabled/
 # sharing=locked prevents concurrent builds from accessing this cache at the
 # same time. To improve build performance, we ensure we only run apt related
 # commands in this layer.
-RUN mv /etc/apt/apt.conf.d/docker-clean /etc/apt/docker-clean-disabled \ &&
+RUN mv /etc/apt/apt.conf.d/docker-clean /etc/apt/docker-clean-disabled && \
     --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \

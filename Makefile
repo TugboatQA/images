@@ -1,4 +1,4 @@
-ALL = $(shell ls services | grep -v -e elasticsearch- -e php- -e percona) elasticsearch php php-fpm-nginx
+ALL = $(shell ls services | grep -v -e elasticsearch- -e php- -e percona) elasticsearch php
 SERVICES = $(shell ls services | grep -v -e elasticsearch\$$ -e php\$$ -e percona)
 export DOCKER_BUILDKIT ?= 1
 # If you would like to push to docker hub after docker build, and then remove
@@ -9,8 +9,6 @@ export push_and_rm ?= 0
 .PARALLEL: $(ALL)
 
 all: $(ALL)
-
-php-nginx: php-fpm-nginx
 
 $(SERVICES):
 	./generate $@
@@ -23,7 +21,7 @@ elasticsearch:
 	./build elasticsearch
 	./tags elasticsearch > images/elasticsearch/TAGS.md
 
-php:
+php: php-nginx
 	./generate php-apache
 	./generate php-fpm
 	./build php

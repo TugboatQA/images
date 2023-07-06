@@ -1,6 +1,7 @@
 ENV COMPOSER_NO_INTERACTION=1 \
     COMPOSER_DISCARD_CHANGES=1 \
     COMPOSER_ALLOW_SUPERUSER=1 \
+    WP_CLI_ALLOW_ROOT=1 \
     DOCROOT=/usr/share/nginx/html
 
 RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng-dev libwebp-dev nginx && \

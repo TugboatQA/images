@@ -1,0 +1,10 @@
+# Override getTags() to change the NAME to php so we get the correct tags.
+
+function getTagsPhp() {
+    NAME=php
+    getTags "${FILTER}"
+}
+
+FROM=php
+FILTER="grep fpm"
+GETTAGS=getTagsPhp

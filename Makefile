@@ -5,7 +5,7 @@ export DOCKER_BUILDKIT ?= 1
 # the image, you may set this environment variable to 1.
 export push_and_rm ?= 0
 
-.PHONY: all clean $(ALL)
+.PHONY: all clean $(ALL) php-nginx
 .PARALLEL: $(ALL)
 
 all: $(ALL)
@@ -21,7 +21,7 @@ elasticsearch:
 	./build elasticsearch
 	./tags elasticsearch > images/elasticsearch/TAGS.md
 
-php:
+php: php-nginx
 	./generate php-apache
 	./generate php-fpm
 	./build php

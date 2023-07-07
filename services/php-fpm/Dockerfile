@@ -1,6 +1,7 @@
 ENV COMPOSER_NO_INTERACTION=1 \
     COMPOSER_DISCARD_CHANGES=1 \
-    COMPOSER_ALLOW_SUPERUSER=1
+    COMPOSER_ALLOW_SUPERUSER=1 \
+    WP_CLI_ALLOW_ROOT=1
 
 RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng-dev libwebp-dev && \
     (apt-get install -y mysql-client || apt-get install -y mariadb-client) && \

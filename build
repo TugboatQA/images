@@ -13,7 +13,7 @@ fi
 NAME=${NAME:-$1}
 SERVICE=${SERVICE:-$NAME}
 # Read in the CSV and convert to an array.
-IFS=',' read -r -a OTHER_PLATFORMS <<< "$OTHER_PLATFORMS"
+IFS=',' read -r -a ADDL_PLATFORMS <<< "$ADDL_PLATFORMS"
 
 build() {
     PLATFORM="$1"
@@ -50,11 +50,11 @@ for DOCKERFILE in images/"${SERVICE}"/**/Dockerfile; do
         docker tag "${IMAGE}" "${ALIAS}"
     done
 
-    # Build other platforms if they are defined, but only if we are pushing.
-    if [[ -n "${OTHER_PLATFORMS[*]}" ]] && [[ "$push_and_rm" = 1 ]]; then
+    # Build additional platforms if defined, but only if we are pushing.
+    if [[ -n "${ADDL_PLATFORMS[*]}" ]] && [[ "$push_and_rm" = 1 ]]; then
         ROOT_MANIFEST=$IMAGE
         PLATFORM_TAGS=()
-        for PLATFORM in "${OTHER_PLATFORMS[@]}"; do
+        for PLATFORM in "${ADDL_PLATFORMS[@]}"; do
             # Add a suffix to the tag with the platform, e.g. "-linux-arm64"
             TAG="$(cut -d' ' -f1 < TAGS)-${PLATFORM//\//-}"
             IMAGE=${NAMESPACE}/${NAME}:${TAG}
@@ -80,7 +80,7 @@ for DOCKERFILE in images/"${SERVICE}"/**/Dockerfile; do
 done
 
 # If we didn't have other platforms to build, push all tags and clean up.
-if [[ "$push_and_rm" = 1 ]] && [[ -z "${OTHER_PLATFORMS[*]}" ]]; then
+if [[ "$push_and_rm" = 1 ]] && [[ -z "${ADDL_PLATFORMS[*]}" ]]; then
     docker push --all-tags "${NAMESPACE}/${NAME}"
     # shellcheck disable=SC2046
     docker rmi --force $(docker images ls --filter=reference="${NAMESPACE}/${NAME}" -q | sort | uniq)

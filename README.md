@@ -49,7 +49,7 @@ defined in this file.
 * **GETTAGS** - An optional function to generate a list of tags for the image. Most image definitions can be parsed automatically from the dockerhub image definition, but there are some cases that need a little help. The resulting list should be comma-separated, with no spaces, one line per unique image.
 * **FILTER** - An optional filter to run against the parsed list of image tags. Usually this is used to exclude things like `rc` or `unstable` tags. This is used by the default GETTAGS function, and must be explicitly built in to a custom GETTAGS function in order to have any effect there.
 * **TEMPLATE** - Which Dockerfile template to use. Valid options: apk, apt, yum, none. Default: apt
-* **OTHER_PLATFORMS** - Additional platforms to build beyond the default linux/amd64. Separate platforms with commas.
+* **ADDL_PLATFORMS** - Additional platforms to build beyond the default linux/amd64. Separate platforms with commas. Ignored if `push_and_rm` is not `1`. See Makefile for details on `push_and_rm`.
 
 ### run
 

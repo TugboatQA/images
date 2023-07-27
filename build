@@ -12,36 +12,76 @@ fi
 
 NAME=${NAME:-$1}
 SERVICE=${SERVICE:-$NAME}
+# Read in the CSV and convert to an array.
+IFS=',' read -r -a ADDL_PLATFORMS <<< "$ADDL_PLATFORMS"
 
-for DOCKERFILE in $(find "images/${SERVICE}" -name Dockerfile); do
-    pushd $(dirname $DOCKERFILE)
+build() {
+    PLATFORM="$1"
 
-    echo Building docker image from $DOCKERFILE
+    echo Building "$PLATFORM" docker image from "$DOCKERFILE"
 
-    NAME=$(cat NAME)
-    TAG=$(cat TAGS | cut -d' ' -f1)
-    ALIASES=$(cat TAGS | cut -d' ' -f2-)
-    IMAGE=${NAMESPACE}/${NAME}:${TAG}
-
-    docker build --pull -t $IMAGE .
+    docker build --platform "$PLATFORM" --pull -t "$IMAGE" .
 
     # Strip volumes
     TEMP=$(mktemp -d)
-    docker save $IMAGE | tar -C "${TEMP}" -x
-    CONFIG=`jq -r '.[0].Config' "${TEMP}/manifest.json"`
+    docker save "$IMAGE" | tar -C "${TEMP}" -x
+    CONFIG=$(jq -r '.[0].Config' "${TEMP}/manifest.json")
     jq 'del(.config.Volumes,.config.Entrypoint)' "${TEMP}/${CONFIG}" > "${TEMP}/config.json"
     mv "${TEMP}/config.json" "${TEMP}/${CONFIG}"
     tar -C "${TEMP}" -c . | docker load
     rm -rf "${TEMP}"
+}
 
-    for ALIAS in ${ALIASES}; do
-        docker tag ${IMAGE} ${NAMESPACE}/${NAME}:${ALIAS}
+for DOCKERFILE in images/"${SERVICE}"/**/Dockerfile; do
+    pushd "$(dirname "$DOCKERFILE")"
+
+    NAME=$(cat NAME)
+    TAG=$(cut -d' ' -f1 < TAGS)
+    # shellcheck disable=SC2207
+    ALIASES=($(cut -d' ' -f2- < TAGS))
+    # Prefix each alias with the namespace and name
+    ALIASES=("${ALIASES[@]/#/${NAMESPACE}/${NAME}:}")
+    IMAGE=${NAMESPACE}/${NAME}:${TAG}
+
+    # Build the default platform image for amd64.
+    build linux/amd64
+
+    for ALIAS in "${ALIASES[@]}"; do
+        docker tag "${IMAGE}" "${ALIAS}"
     done
+
+    # Build additional platforms if defined, but only if we are pushing.
+    if [[ -n "${ADDL_PLATFORMS[*]}" ]] && [[ "$push_and_rm" = 1 ]]; then
+        ROOT_MANIFEST=$IMAGE
+        PLATFORM_TAGS=()
+        for PLATFORM in "${ADDL_PLATFORMS[@]}"; do
+            # Add a suffix to the tag with the platform, e.g. "-linux-arm64"
+            TAG="$(cut -d' ' -f1 < TAGS)-${PLATFORM//\//-}"
+            IMAGE=${NAMESPACE}/${NAME}:${TAG}
+            PLATFORM_TAGS+=("$IMAGE")
+            build "$PLATFORM"
+        done
+        docker push --all-tags "${NAMESPACE}/${NAME}"
+
+        # Iterate over all of the tags for this image and create manifest lists
+        # with the platform tags.
+        for MANIFEST in "$ROOT_MANIFEST" "${ALIASES[@]}"; do
+            echo "Creating multi-platform manifest list $MANIFEST to add ${PLATFORM_TAGS[*]}"
+            docker manifest rm "$MANIFEST" 2>/dev/null || true
+            docker manifest create "$MANIFEST" "$MANIFEST" "${PLATFORM_TAGS[@]}"
+            docker manifest push "$MANIFEST"
+            docker manifest rm "$MANIFEST"
+        done
+        # shellcheck disable=SC2046
+        docker rmi --force $(docker images ls --filter=reference="${NAMESPACE}/${NAME}" -q | sort | uniq)
+    fi
 
     popd
 done
 
-if [[ "$push_and_rm" = 1 ]]; then
+# If we didn't have other platforms to build, push all tags and clean up.
+if [[ "$push_and_rm" = 1 ]] && [[ -z "${ADDL_PLATFORMS[*]}" ]]; then
     docker push --all-tags "${NAMESPACE}/${NAME}"
+    # shellcheck disable=SC2046
     docker rmi --force $(docker images ls --filter=reference="${NAMESPACE}/${NAME}" -q | sort | uniq)
 fi

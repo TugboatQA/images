@@ -15,20 +15,25 @@ SERVICE=${SERVICE:-$NAME}
 # Read in the CSV and convert to an array.
 IFS=',' read -r -a ADDL_PLATFORMS <<< "$ADDL_PLATFORMS"
 
+BUILDX_NAME="$NAMESPACE-$NAME"
+# Use builder, or create a new builder, and bootstrap it.
+docker buildx use "$BUILDX_NAME" 2>/dev/null || docker buildx create --use --bootstrap --name "$BUILDX_NAME"
+
 build() {
     PLATFORM="$1"
 
     echo Building "$PLATFORM" docker image from "$DOCKERFILE"
 
-    docker build --platform "$PLATFORM" --pull -t "$IMAGE" .
+    TEMP=$(mktemp -d)
+    docker buildx build --platform "$PLATFORM" --output type=docker,dest="${TEMP}/out.tar" --pull .
 
     # Strip volumes
-    TEMP=$(mktemp -d)
-    docker save "$IMAGE" | tar -C "${TEMP}" -x
+    tar -C "${TEMP}" -xf "${TEMP}/out.tar"
+    rm -f "${TEMP}/out.tar"
     CONFIG=$(jq -r '.[0].Config' "${TEMP}/manifest.json")
     jq 'del(.config.Volumes,.config.Entrypoint)' "${TEMP}/${CONFIG}" > "${TEMP}/config.json"
-    mv "${TEMP}/config.json" "${TEMP}/${CONFIG}"
-    tar -C "${TEMP}" -c . | docker load
+    mv -f "${TEMP}/config.json" "${TEMP}/${CONFIG}"
+    tar -C "${TEMP}" -c . | docker image import - "$IMAGE"
     rm -rf "${TEMP}"
 }
 
@@ -85,3 +90,6 @@ if [[ "$push_and_rm" = 1 ]] && [[ -z "${ADDL_PLATFORMS[*]}" ]]; then
     # shellcheck disable=SC2046
     docker rmi --force $(docker images ls --filter=reference="${NAMESPACE}/${NAME}" -q | sort | uniq)
 fi
+
+# Clean up the buildx builder when we're done.
+docker buildx rm --force "$BUILDX_NAME" 2>/dev/null || true

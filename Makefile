@@ -28,9 +28,7 @@ php: php-nginx
 
 clean:
 	rm -rf images
-	docker buildx prune --force
 
 clean-all: clean
 	docker container prune --force
 	docker image prune --all --force
-	docker buildx prune --all --force

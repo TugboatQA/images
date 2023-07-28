@@ -1,7 +1,5 @@
 ALL = $(shell ls services | grep -v -e elasticsearch- -e php- -e percona) elasticsearch php
 SERVICES = $(shell ls services | grep -v -e elasticsearch\$$ -e php\$$ -e percona)
-# We need to use Docker buildkit to build multi-platform images.
-export DOCKER_BUILDKIT := 1
 # If you would like to push to docker hub after docker build, and then remove
 # the image, you may set this environment variable to 1.
 export push_and_rm ?= 0
@@ -30,7 +28,9 @@ php: php-nginx
 
 clean:
 	rm -rf images
+	docker buildx prune --force
 
 clean-all: clean
 	docker container prune --force
 	docker image prune --all --force
+	docker buildx prune --all --force

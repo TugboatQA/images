@@ -33,7 +33,7 @@ build() {
     CONFIG=$(jq -r '.[0].Config' "${TEMP}/manifest.json")
     jq 'del(.config.Volumes,.config.Entrypoint)' "${TEMP}/${CONFIG}" > "${TEMP}/config.json"
     mv -f "${TEMP}/config.json" "${TEMP}/${CONFIG}"
-    tar -C "${TEMP}" -c . | docker image import - "$IMAGE"
+    tar -C "${TEMP}" -c . | docker image import --platform "$PLATFORM" - "$IMAGE"
     rm -rf "${TEMP}"
 }
 

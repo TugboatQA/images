@@ -15,3 +15,9 @@
 
 # Resulting image Dockerfiles
 /images
+
+# Task checksums
+.task
+
+# Generated Bake file
+bake.json

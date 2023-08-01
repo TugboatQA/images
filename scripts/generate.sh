@@ -65,7 +65,7 @@ for TAGS in $($GETTAGS "${FILTER}"); do
         cp -r "${DIR}/files" "${IMGDIR}/"
     fi
 
-    cat Dockerfile.${TEMPLATE}.template | \
+    cat "templates/Dockerfile.${TEMPLATE}.template" | \
         sed "s|{{FROM}}|${IMAGE}|g" | \
         sed "/{{DOCKERFILE}}/ r ${DOCKERFILE}" | \
         sed "/{{DOCKERFILE}}/d" | \

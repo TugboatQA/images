@@ -5,7 +5,17 @@ USER root
 RUN yum install -y git sudo openssh-clients ca-certificates net-tools bzip2 vim-enhanced \
         nmap-ncat make gcc gcc-c++ rsync wget tar && \
     \
-    (yum install -y glibc-static || yum --enablerepo=powertools install -y glibc-static) && \
+    ( yum install -y glibc-static || \
+      yum --enablerepo=powertools install -y glibc-static || \
+      ( \
+        yum config-manager --set-enabled powertools && \
+        yum install -y glibc-static \
+      ) || \
+      ( \
+        yum config-manager --set-enabled $(yum repolist all | grep codeready | awk '{print $1}') && \
+        yum install -y glibc-static \
+      ) \
+    ) && \
     \
     echo "[user]" > ~/.gitconfig && \
     echo "    email = root@tugboat.qa" >> ~/.gitconfig && \

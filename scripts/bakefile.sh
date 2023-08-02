@@ -17,7 +17,7 @@ for dockerfile in images/*/*/Dockerfile; do
     obj=$(printf '{
         "context": "%s",
         "dockerfile": "Dockerfile",
-        "output": ["type=docker,dest=%s/out.tar"],
+        "output": ["type=docker,dest=%s/image.tar"],
         "platforms": ["linux/amd64"],
         "pull": true
     }' "$dir" "$dir")

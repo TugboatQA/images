@@ -1,51 +1,80 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: 3
 
+dotenv:
+  - .env.local
+  - .local.env
+  - .env
+
 vars:
-    TARGETS:
-        sh: find services -type d -maxdepth 1 -mindepth 1 -exec basename {} \;
-    TASK_MINOR_VERSION:
-        sh: echo "{{.TASK_VERSION}}" | awk -F'.' '{print $2}'
+  TARGETS:
+    sh: find services -type d -maxdepth 1 -mindepth 1 -exec basename {} \;
+  TASK_MINOR_VERSION:
+    sh: echo "{{.TASK_VERSION}}" | awk -F'.' '{print $2}'
+  BUILDX_BUILDER: tugboatqa-bakery
 
 tasks:
-    default:
-        preconditions:
-            - sh: 'test {{.TASK_MINOR_VERSION}} -ge 28'
-        silent: true
-        cmds:
-            - for: { var: TARGETS }
-              task: generate
-              vars:
-                  SERVICEDIR: '{{.ITEM}}'
-            - task: bakefile
-
-    generate:
+  default:
+    preconditions:
+      - sh: 'test {{.TASK_MINOR_VERSION}} -ge 28'
+        msg: 'Please upgrade Task to v3.28.0 or greater.'
+    silent: true
+    cmds:
+      - for: { var: TARGETS }
+        task: generate
         vars:
-            NAME:
-                sh: |
-                    test -f services/{{.SERVICEDIR}}/manifest && source services/{{.SERVICEDIR}}/manifest
-                    (test -n "$NAME" && echo "$NAME") || (test -n "$SERVICE" && echo "$SERVICE") || echo "{{.SERVICEDIR}}"
-        preconditions:
-            - sh: 'test -n "{{.SERVICEDIR}}"'
-              msg: 'Specify the directory name of the service with a SERVICEDIR environment variable.'
-        status:
-            - test -f images/{{.NAME}}/{{.SERVICEDIR}}
-        cmds:
-            - scripts/generate.sh {{.SERVICEDIR}}
-            - touch images/{{.NAME}}/{{.SERVICEDIR}}
+          SERVICEDIR: '{{.ITEM}}'
+      - task: bake
 
-    bakefile:
-        preconditions:
-            - sh: 'test -d images'
-              msg: 'Generate some Dockerfiles first using task generate.'
-        sources:
-            - images/*/*/Dockerfile
-        generates:
-            - ./bake.json
-        cmds:
-            - scripts/bakefile.sh
+  generate:
+    vars:
+      NAME:
+        sh: |
+          test -f services/{{.SERVICEDIR}}/manifest && source services/{{.SERVICEDIR}}/manifest
+          (test -n "$NAME" && echo "$NAME") || (test -n "$SERVICE" && echo "$SERVICE") || echo "{{.SERVICEDIR}}"
+    preconditions:
+      - sh: 'test -n "{{.SERVICEDIR}}"'
+        msg: 'Specify the directory name of the service with a SERVICEDIR environment variable.'
+    status:
+      - test -f images/{{.NAME}}/{{.SERVICEDIR}}
+    cmds:
+      - scripts/generate.sh {{.SERVICEDIR}}
+      - touch images/{{.NAME}}/{{.SERVICEDIR}}
 
-    bake:
-        deps:
-            - bakefile
-        cmds:
-            - docker buildx bake --file ./bake.json
+  bakefile:
+    preconditions:
+      - sh: 'test -d images'
+        msg: 'Generate some Dockerfiles first using task generate.'
+    sources:
+      - images/*/*/Dockerfile
+    generates:
+      - ./bake.json
+    cmds:
+      - scripts/bakefile.sh
+
+  create-builder:
+    deps:
+      - buildkitd.toml
+    status:
+      - docker buildx ls | grep -q '^{{.BUILDX_BUILDER}}\s'
+    cmds:
+      - docker buildx create
+        --name "{{.BUILDX_BUILDER}}"
+        --config buildkitd.toml
+
+  buildkitd.toml:
+    generates:
+      - ./buildkitd.toml
+    cmds:
+      - envsubst < templates/buildkitd.template.toml > buildkitd.toml
+    status:
+      - grep -q "max-parallelism = ${BUILDX_MAX_PARALLELISM}\$" buildkitd.toml
+
+  bake:
+    generates:
+      - images/*/*/image.tar
+    deps:
+      - bakefile
+      - create-builder
+    cmds:
+      - docker buildx bake --builder '{{.BUILDX_BUILDER}}' --file ./bake.json

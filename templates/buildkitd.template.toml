@@ -1,0 +1,2 @@
+[worker.oci]
+  max-parallelism = $BUILDX_MAX_PARALLELISM

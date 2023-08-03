@@ -78,3 +78,8 @@ tasks:
       - create-builder
     cmds:
       - docker buildx bake --builder '{{.BUILDX_BUILDER}}' --file ./bake.json
+
+  clean:
+    cmds:
+      - rm -f bake.json buildkitd.toml
+      - rm -Rf images

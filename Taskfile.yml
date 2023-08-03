@@ -71,6 +71,8 @@ tasks:
 
   bake:
     preconditions:
+      - sh: hash jq 2>/dev/null
+        msg: Please install jq
       - sh: test $(jq '.target | length' bake.json) -ne 0
         msg: No targets to bake!
     generates:

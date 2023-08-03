@@ -13,6 +13,9 @@ vars:
     sh: echo "{{.TASK_VERSION}}" | awk -F'.' '{print $2}'
   BUILDX_BUILDER: tugboatqa-bakery
 
+env:
+  OVERWRITE: false
+
 tasks:
   default:
     preconditions:
@@ -45,10 +48,6 @@ tasks:
     preconditions:
       - sh: 'test -d images'
         msg: 'Generate some Dockerfiles first using task generate.'
-    sources:
-      - images/*/*/Dockerfile
-    generates:
-      - ./bake.json
     cmds:
       - scripts/bakefile.sh
 
@@ -71,6 +70,9 @@ tasks:
       - grep -q "max-parallelism = ${BUILDX_MAX_PARALLELISM}\$" buildkitd.toml
 
   bake:
+    preconditions:
+      - sh: test $(jq '.target | length' bake.json) -ne 0
+        msg: No targets to bake!
     generates:
       - images/*/*/image.tar
     deps:

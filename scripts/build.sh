@@ -2,8 +2,6 @@
 
 set -e
 
-NAMESPACE=${NAMESPACE:-tugboatqa}
-
 DIR="services/$1"
 
 if [ -e "${DIR}/manifest" ]; then

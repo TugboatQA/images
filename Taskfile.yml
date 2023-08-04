@@ -28,6 +28,8 @@ tasks:
         vars:
           SERVICEDIR: '{{.ITEM}}'
       - task: bake
+      - task: build
+      - task: push
 
   generate:
     vars:
@@ -71,8 +73,6 @@ tasks:
 
   bake:
     preconditions:
-      - sh: hash jq 2>/dev/null
-        msg: Please install jq
       - sh: test $(jq '.target | length' bake.json) -ne 0
         msg: No targets to bake!
     generates:
@@ -83,7 +83,65 @@ tasks:
     cmds:
       - docker buildx bake --builder '{{.BUILDX_BUILDER}}' --file ./bake.json
 
-  clean:
+  build:
+    preconditions:
+      - sh: 'test {{.TASK_MINOR_VERSION}} -ge 28'
+        msg: 'Please upgrade Task to v3.28.0 or greater.'
+    vars:
+      IMAGES:
+        sh: echo images/*/*/image.tar
+    sources:
+      - images/*/*/image.tar
+    generates:
+      - images/*/built
+    method: timestamp
     cmds:
+      - for: { var: IMAGES }
+        task: build-one
+        vars:
+          TARBALL: '{{.ITEM}}'
+
+  build-one:
+    preconditions:
+      - sh: test -n "{{.TARBALL}}"
+        msg: Specify the tarball you would like to build with TARBALL variable
+    cmds:
+      - scripts/build.sh "{{.TARBALL}}"
+
+  push:
+    preconditions:
+      - sh: 'test {{.TASK_MINOR_VERSION}} -ge 28'
+        msg: 'Please upgrade Task to v3.28.0 or greater.'
+    vars:
+      IMAGES:
+        sh: for x in images/*/built; do echo "$(basename $(dirname $x))"; done
+    cmds:
+      - for: { var: IMAGES }
+        task: push-one
+        vars:
+          IMAGE: '{{.ITEM}}'
+
+  push-one:
+    sources:
+      - images/{{.IMAGE}}/built
+    generates:
+      - images/{{.IMAGE}}/pushed
+    preconditions:
+      - sh: test -n "{{.IMAGE}}"
+        msg: Specify the image you would like to push with IMAGE variable
+    cmds:
+      - docker push --all-tags "{{.NAMESPACE}}/{{.IMAGE}}"
+      - touch images/{{.IMAGE}}/pushed
+
+  clean:
+    preconditions:
+      - sh: 'test {{.TASK_MINOR_VERSION}} -ge 28'
+        msg: 'Please upgrade Task to v3.28.0 or greater.'
+    vars:
+      IMAGES:
+        sh: for x in images/*; do echo "$(basename $x)"; done
+    cmds:
+      - for: { var: IMAGES, as: IMAGE }
+        cmd: docker rmi --force $(docker images ls --filter=reference="{{.NAMESPACE}}/{{.IMAGE}}" -q | sort | uniq)
       - rm -f bake.json buildkitd.toml
       - rm -Rf images

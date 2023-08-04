@@ -2,44 +2,44 @@
 
 set -e
 
-DIR="services/$1"
+tarball=$1
+platform=${2-linux/amd64}
 
-if [ -e "${DIR}/manifest" ]; then
-    source "${DIR}/manifest"
+# Ensure the tarball exists and is larger than zero bytes.
+test -s "$tarball"
+
+dir=$(dirname "$tarball")
+parent=$(dirname "$dir")
+name=$(cat "$dir/NAME")
+tag=$(cut -d' ' -f1 < "$dir/TAGS")
+# shellcheck disable=SC2207
+aliases=($(cut -d' ' -f2- < "$dir/TAGS"))
+image=${NAMESPACE}/${name}:${tag}
+
+if grep -q "^$image\$" "$parent/built" 2>/dev/null && [[ "$OVERWRITE" != "true" ]]; then
+    echo "Skipping $image; set OVERWRITE to true to overwrite this image"
+    exit
 fi
 
-NAME=${NAME:-$1}
-SERVICE=${SERVICE:-$NAME}
+temp=$(mktemp -d)
+trap 'rm -rf $temp' EXIT SIGINT
 
-for DOCKERFILE in $(find "images/${SERVICE}" -name Dockerfile); do
-    pushd $(dirname $DOCKERFILE)
+# Extract the tarball to the temp directory.
+tar -C "$temp" -xf "$tarball"
 
-    echo Building docker image from $DOCKERFILE
+# Remove volumes and entrypoint from the manifest.
+config=$(jq -r '.[0].Config' "${temp}/manifest.json")
+jq 'del(.config.Volumes,.config.Entrypoint)' "${temp}/${config}" > "${temp}/config.json"
+mv -f "${temp}/config.json" "${temp}/${config}"
+tar -C "$temp" -c . | docker image import --platform "$platform" - "$image"
 
-    NAME=$(cat NAME)
-    TAG=$(cat TAGS | cut -d' ' -f1)
-    ALIASES=$(cat TAGS | cut -d' ' -f2-)
-    IMAGE=${NAMESPACE}/${NAME}:${TAG}
+echo "$image" >> "$parent/built"
 
-    docker build --pull -t $IMAGE .
-
-    # Strip volumes
-    TEMP=$(mktemp -d)
-    docker save $IMAGE | tar -C "${TEMP}" -x
-    CONFIG=`jq -r '.[0].Config' "${TEMP}/manifest.json"`
-    jq 'del(.config.Volumes,.config.Entrypoint)' "${TEMP}/${CONFIG}" > "${TEMP}/config.json"
-    mv "${TEMP}/config.json" "${TEMP}/${CONFIG}"
-    tar -C "${TEMP}" -c . | docker load
-    rm -rf "${TEMP}"
-
-    for ALIAS in ${ALIASES}; do
-        docker tag ${IMAGE} ${NAMESPACE}/${NAME}:${ALIAS}
-    done
-
-    popd
+for alias in "${aliases[@]}"; do
+    alias_tag="${NAMESPACE}/${name}:${alias}"
+    docker tag "$image" "$alias_tag"
+    echo "$alias_tag" >> "$parent/built"
 done
 
-if [[ "$push_and_rm" = 1 ]]; then
-    docker push --all-tags "${NAMESPACE}/${NAME}"
-    docker rmi --force $(docker images ls --filter=reference="${NAMESPACE}/${NAME}" -q | sort | uniq)
-fi
+# If we've gotten this far, it's safe to delete the tarball.
+rm "$tarball"

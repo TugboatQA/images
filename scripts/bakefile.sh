@@ -30,3 +30,4 @@ for dockerfile in images/*/*/Dockerfile; do
     jq --arg name "$name" --argjson obj "$obj" '.target += { ($name): $obj } | .group.default.targets += [$name]' bake.json > newbake.json
     rm bake.json && mv newbake.json bake.json
 done
+rm -f newbake.json

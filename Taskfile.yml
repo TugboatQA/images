@@ -11,10 +11,6 @@ vars:
     sh: find services -type d -maxdepth 1 -mindepth 1 -exec basename {} \;
   TASK_MINOR_VERSION:
     sh: echo "{{.TASK_VERSION}}" | awk -F'.' '{print $2}'
-  BUILDX_BUILDER: tugboatqa-bakery
-
-env:
-  OVERWRITE: false
 
 tasks:
   default:
@@ -52,6 +48,7 @@ tasks:
         msg: 'Generate some Dockerfiles first using task generate.'
     cmds:
       - scripts/bakefile.sh
+      - defer: rm -f newbake.json
 
   create-builder:
     deps:
@@ -60,10 +57,12 @@ tasks:
       - docker buildx ls | grep -q '^{{.BUILDX_BUILDER}}\s'
     cmds:
       - docker buildx create
-        --name "{{.BUILDX_BUILDER}}"
-        --config buildkitd.toml
+          --name "{{.BUILDX_BUILDER}}"
+          --config buildkitd.toml
 
   buildkitd.toml:
+    sources:
+      - images/*/*/Dockerfile
     generates:
       - ./buildkitd.toml
     cmds:
@@ -72,9 +71,8 @@ tasks:
       - grep -q "max-parallelism = ${BUILDX_MAX_PARALLELISM}\$" buildkitd.toml
 
   bake:
-    preconditions:
-      - sh: test $(jq '.target | length' bake.json) -ne 0
-        msg: No targets to bake!
+    status:
+      - test $(jq '.target | length' bake.json) -eq 0
     generates:
       - images/*/*/image.tar
     deps:
@@ -89,7 +87,9 @@ tasks:
         msg: 'Please upgrade Task to v3.28.0 or greater.'
     vars:
       IMAGES:
-        sh: echo images/*/*/image.tar
+        # We loop over any image.tar files to be sure we only build images that
+        # still need to be built.
+        sh: for x in images/*/*/image.tar; do basename $(dirname $(dirname $x)); done | sort | uniq
     sources:
       - images/*/*/image.tar
     generates:
@@ -112,6 +112,8 @@ tasks:
     preconditions:
       - sh: 'test {{.TASK_MINOR_VERSION}} -ge 28'
         msg: 'Please upgrade Task to v3.28.0 or greater.'
+    status:
+      - test "$PUSH" != "true" && test "$PUSH" != "1"
     vars:
       IMAGES:
         sh: for x in images/*/built; do echo "$(basename $(dirname $x))"; done
@@ -129,6 +131,8 @@ tasks:
     preconditions:
       - sh: test -n "{{.IMAGE}}"
         msg: Specify the image you would like to push with IMAGE variable
+    status:
+      - test "$PUSH" != "true" && test "$PUSH" != "1"
     cmds:
       - docker push --all-tags "{{.NAMESPACE}}/{{.IMAGE}}"
       - touch images/{{.IMAGE}}/pushed
@@ -142,6 +146,6 @@ tasks:
         sh: for x in images/*; do echo "$(basename $x)"; done
     cmds:
       - for: { var: IMAGES, as: IMAGE }
-        cmd: docker rmi --force $(docker images ls --filter=reference="{{.NAMESPACE}}/{{.IMAGE}}" -q | sort | uniq)
+        cmd: docker rmi --force $(docker images ls --filter=reference="{{.NAMESPACE}}/{{.IMAGE}}" -q | sort | uniq) || true
       - rm -f bake.json buildkitd.toml
       - rm -Rf images

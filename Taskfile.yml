@@ -90,11 +90,6 @@ tasks:
         # We loop over any image.tar files to be sure we only build images that
         # still need to be built.
         sh: for x in images/*/*/image.tar; do basename $(dirname $(dirname $x)); done | sort | uniq
-    sources:
-      - images/*/*/image.tar
-    generates:
-      - images/*/built
-    method: timestamp
     cmds:
       - for: { var: IMAGES }
         task: build-one
@@ -105,6 +100,12 @@ tasks:
     preconditions:
       - sh: test -n "{{.TARBALL}}"
         msg: Specify the tarball you would like to build with TARBALL variable
+      - sh: test -s "{{.TARBALL}}"
+        msg: '{{.TARBALL}} does not exist or is empty.'
+    sources:
+      - '{{.TARBALL}}'
+    generates:
+      - images/*/built
     cmds:
       - scripts/build.sh "{{.TARBALL}}"
 
@@ -114,6 +115,10 @@ tasks:
         msg: 'Please upgrade Task to v3.28.0 or greater.'
     status:
       - test "$PUSH" != "true" && test "$PUSH" != "1"
+    sources:
+      - images/*/built/*
+    generates:
+      - images/*/pushed
     vars:
       IMAGES:
         sh: for x in images/*/built; do echo "$(basename $(dirname $x))"; done

@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+DEBUG=${DEBUG-false}
+if [[ "$DEBUG" = "true" ]] || [[ "$DEBUG" = "1" ]]; then
+    set -x
+fi
+
 function getTags() {
     TEMP=$(mktemp -d)
     FILTER=$1

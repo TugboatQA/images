@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+DEBUG=${DEBUG-false}
+if [[ "$DEBUG" = "true" ]] || [[ "$DEBUG" = "1" ]]; then
+    set -x
+fi
+
 DIR="images/$1"
 
 echo "## Supported Tags for tugboatqa/$1"

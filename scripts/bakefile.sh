@@ -17,6 +17,7 @@ echo '{
 
 for dockerfile in images/*/*/Dockerfile; do
     dir=$(dirname "$dockerfile")
+    parent=$(dirname "$dir")
     dest="$dir/image.tar"
     name=$(cat "$dir/NAME")
     tag=$(cut -d' ' -f1 < "$dir/TAGS")
@@ -25,7 +26,7 @@ for dockerfile in images/*/*/Dockerfile; do
 
     # If we are not overwriting and the tar already exists and has a size
     # greater than zero, continue to the next Dockerfile.
-    if [[ "$OVERWRITE_EXISTING" != "true" ]] && [[ "$OVERWRITE_EXISTING" != "1" ]] && [[ -s "$dest" ]]; then
+    if [[ "$OVERWRITE_EXISTING" != "true" ]] && [[ "$OVERWRITE_EXISTING" != "1" ]] && [[ -f "$parent/built/$key" ]]; then
         echo "Skipping $name; rm $dest or set OVERWRITE_EXISTING to true to overwrite this image" >&2
         continue
     fi

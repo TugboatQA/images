@@ -2,12 +2,11 @@
 
 set -eo pipefail
 
-DEBUG=${DEBUG-false}
+DEBUG=${DEBUG:-false}
 if [[ "$DEBUG" = "true" ]] || [[ "$DEBUG" = "1" ]]; then
     set -x
 fi
 
-platform=${2-linux/amd64}
 parent=images/"$1"
 
 mkdir -p "$parent/built"

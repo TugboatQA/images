@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DEBUG=${DEBUG-false}
+DEBUG=${DEBUG:-false}
 if [[ "$DEBUG" = "true" ]] || [[ "$DEBUG" = "1" ]]; then
     set -x
 fi
@@ -42,41 +42,63 @@ SERVICE=${SERVICE:-$NAME}
 FILTER=${FILTER:-cat}
 TEMPLATE=${TEMPLATE:-apt}
 GETTAGS=${GETTAGS:-getTags}
+# Read in comma-separated platforms as a bash array.
+IFS=',' read -r -a PLATFORMS <<< "${PLATFORMS:-linux/amd64}"
 
 SERVICEDIR="images/${SERVICE}"
 mkdir -p "${SERVICEDIR}"
 
 for TAGS in $($GETTAGS "${FILTER}"); do
     TAG=$(echo "${TAGS}" | cut -d, -f1)
-    IMGDIR="${SERVICEDIR}/${TAG}"
-    IMAGE="${FROM}:${TAG}"
+    PLATFORM_TAGS=()
 
-    mkdir -p "${IMGDIR}"
+    for PLATFORM in "${PLATFORMS[@]}"; do
+        PLATFORM_SUFFIX=$(test "$PLATFORM" = "linux/amd64" || echo "-${PLATFORM//\//-}")
+        IMGDIR="${SERVICEDIR}/${TAG}${PLATFORM_SUFFIX}"
+        IMAGE="${FROM}:${TAG}"
+        mkdir -p "${IMGDIR}"
 
-    RUN=""
-    if [ -e "${DIR}/run" ]; then
-        cp "${DIR}/run" "${IMGDIR}/run"
-        chmod 755 "${IMGDIR}/run"
-        RUN="RUN mkdir -p /etc/service/${SERVICE}\nCOPY run /etc/service/${SERVICE}/run"
+        RUN=""
+        if [ -e "${DIR}/run" ]; then
+            cp "${DIR}/run" "${IMGDIR}/run"
+            chmod 755 "${IMGDIR}/run"
+            RUN="RUN mkdir -p /etc/service/${SERVICE}\nCOPY run /etc/service/${SERVICE}/run"
+        fi
+
+        DOCKERFILE=/dev/null
+        if [ -e "${DIR}/Dockerfile" ]; then
+            DOCKERFILE="${DIR}/Dockerfile"
+        fi
+
+        cp -r "${DIR}/../../share" "${IMGDIR}/"
+        if [ -e "${DIR}/files" ]; then
+            cp -r "${DIR}/files" "${IMGDIR}/"
+        fi
+
+        cat "templates/Dockerfile.${TEMPLATE}.template" | \
+            sed "s|{{FROM}}|${IMAGE}|g" | \
+            sed "/{{DOCKERFILE}}/ r ${DOCKERFILE}" | \
+            sed "/{{DOCKERFILE}}/d" | \
+            perl -pe "s|\{\{RUN\}\}|${RUN}|g" \
+            > "${IMGDIR}/Dockerfile"
+
+        # If there isn't a suffix, we want all tags and aliases. Otherwise, we
+        # just create a single tag with the platform suffix.
+        if [[ -z "$PLATFORM_SUFFIX" ]]; then
+            echo "${TAGS}" | tr ',' ' ' > "${IMGDIR}/TAGS"
+        else
+            PLATFORM_TAGS+=("$TAG$PLATFORM_SUFFIX")
+            echo "$TAG$PLATFORM_SUFFIX" > "${IMGDIR}/TAGS"
+        fi
+        echo "${NAME}" > "${IMGDIR}/NAME"
+        echo "${PLATFORM}" > "${IMGDIR}/PLATFORM"
+    done
+
+    if [[ -n "${PLATFORM_TAGS[*]}" ]]; then
+        list=()
+        for x in ${TAGS//,/ } "${PLATFORM_TAGS[@]}"; do
+            list+=("${NAMESPACE}/${NAME}:$x")
+        done
+        echo "${list[*]}" >> "$SERVICEDIR/MANIFEST_LIST"
     fi
-
-    DOCKERFILE=/dev/null
-    if [ -e "${DIR}/Dockerfile" ]; then
-        DOCKERFILE="${DIR}/Dockerfile"
-    fi
-
-    cp -r "${DIR}/../../share" "${IMGDIR}/"
-    if [ -e "${DIR}/files" ]; then
-        cp -r "${DIR}/files" "${IMGDIR}/"
-    fi
-
-    cat "templates/Dockerfile.${TEMPLATE}.template" | \
-        sed "s|{{FROM}}|${IMAGE}|g" | \
-        sed "/{{DOCKERFILE}}/ r ${DOCKERFILE}" | \
-        sed "/{{DOCKERFILE}}/d" | \
-        perl -pe "s|\{\{RUN\}\}|${RUN}|g" \
-        > "${IMGDIR}/Dockerfile"
-
-    echo "${TAGS}" | tr ',' ' ' > "${IMGDIR}/TAGS"
-    echo "${NAME}" > "${IMGDIR}/NAME"
 done

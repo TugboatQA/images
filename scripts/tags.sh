@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DEBUG=${DEBUG-false}
+DEBUG=${DEBUG:-false}
 if [[ "$DEBUG" = "true" ]] || [[ "$DEBUG" = "1" ]]; then
     set -x
 fi

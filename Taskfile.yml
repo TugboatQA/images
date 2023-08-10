@@ -26,6 +26,7 @@ tasks:
       - task: bake
       - task: build
       - task: push
+      - task: manifest-create
 
   generate:
     vars:
@@ -135,12 +136,40 @@ tasks:
       - images/{{.IMAGE}}/pushed
     preconditions:
       - sh: test -n "{{.IMAGE}}"
-        msg: Specify the image you would like to push with IMAGE variable
+        msg: Specify the image you would like to push with IMAGE variable.
     status:
       - test "$PUSH" != "true" && test "$PUSH" != "1"
     cmds:
       - docker push --all-tags "{{.NAMESPACE}}/{{.IMAGE}}"
       - touch images/{{.IMAGE}}/pushed
+
+  manifest-create:
+    preconditions:
+      - sh: 'test {{.TASK_MINOR_VERSION}} -ge 28'
+        msg: 'Please upgrade Task to v3.28.0 or greater.'
+    status:
+      - test "$PUSH" != "true" && test "$PUSH" != "1"
+    sources:
+      - images/*/MANIFEST_LIST
+    vars:
+      MANIFEST_LISTS:
+        sh: echo images/*/MANIFEST_LIST
+    cmds:
+      - for: { var: MANIFEST_LISTS }
+        task: manifest-create-one
+        vars:
+          MANIFEST_LIST: '{{.ITEM}}'
+
+  manifest-create-one:
+    preconditions:
+      - sh: test -n "{{.MANIFEST_LIST}}"
+        msg: Specify the path to the manifest list you would like to create with MANIFEST_LIST variable.
+      - sh: test -s "{{.MANIFEST_LIST}}"
+        msg: The manifest list {{.MANIFEST_LIST}} does not exist or is empty.
+    status:
+      - test "$PUSH" != "true" && test "$PUSH" != "1"
+    cmds:
+      - scripts/manifest.sh {{.MANIFEST_LIST}}
 
   clean:
     preconditions:

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEBUG=${DEBUG-false}
+DEBUG=${DEBUG:-false}
 if [[ "$DEBUG" = "true" ]] || [[ "$DEBUG" = "1" ]]; then
     set -x
 fi
@@ -21,6 +21,7 @@ for dockerfile in images/*/*/Dockerfile; do
     dest="$dir/image.tar"
     name=$(cat "$dir/NAME")
     tag=$(cut -d' ' -f1 < "$dir/TAGS")
+    platform=$(cat "$dir/PLATFORM")
     image=${NAMESPACE}/${name}:${tag}
     key=${image//[:\/\.]/-}
 
@@ -35,10 +36,10 @@ for dockerfile in images/*/*/Dockerfile; do
         "context": "%s",
         "dockerfile": "Dockerfile",
         "output": ["type=docker,dest=%s"],
-        "platforms": ["linux/amd64"],
+        "platforms": ["%s"],
         "tags": ["%s"],
         "pull": true
-    }' "$dir" "$dest" "$image")
+    }' "$dir" "$dest" "$platform" "$image")
     jq --arg key "$key" --argjson obj "$obj" '.target += { ($key): $obj } | .group.default.targets += [$key]' bake.json > newbake.json
     rm bake.json && mv newbake.json bake.json
 done

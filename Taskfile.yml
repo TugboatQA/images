@@ -47,7 +47,7 @@ tasks:
     preconditions:
       - sh: 'test -d images'
         msg: 'Generate some Dockerfiles first using task generate.'
-      - sh: 'hash jq'
+      - sh: 'command -v jq'
         msg: 'You must install jq.'
     sources:
       - images/*/*/Dockerfile
@@ -79,7 +79,7 @@ tasks:
 
   bake:
     preconditions:
-      - sh: 'hash jq'
+      - sh: 'command -v jq'
         msg: 'You must install jq.'
     status:
       - test $(jq '.target | length' bake.json) -eq 0
@@ -103,27 +103,13 @@ tasks:
         # still need to be built.
         sh: for x in images/*/*/image.tar; do basename $(dirname $(dirname $x)); done | sort | uniq
     cmds:
-      - for: { var: IMAGES }
-        task: build-one
-        vars:
-          IMAGE: '{{.ITEM}}'
-
-  build-one:
-    preconditions:
-      - sh: test -n "{{.IMAGE}}"
-        msg: Specify the name of the image you would like to build with IMAGE variable
-    sources:
-      - '{{.TARBALL}}'
-    generates:
-      - images/*/built
-    cmds:
-      - scripts/build.sh "{{.IMAGE}}"
+      - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --bar --tag scripts/build.sh ::: {{.IMAGES}}'
 
   push:
     preconditions:
       - sh: 'test {{.TASK_MINOR_VERSION}} -ge 28'
         msg: 'Please upgrade Task to v3.28.0 or greater.'
-      - sh: 'hash parallel'
+      - sh: 'command -v parallel'
         msg: 'You must install GNU Parallel.'
     status:
       - test "$PUSH" != "true" && test "$PUSH" != "1"

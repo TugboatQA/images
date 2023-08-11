@@ -47,6 +47,12 @@ tasks:
     preconditions:
       - sh: 'test -d images'
         msg: 'Generate some Dockerfiles first using task generate.'
+      - sh: 'hash jq'
+        msg: 'You must install jq.'
+    sources:
+      - images/*/*/Dockerfile
+    generates:
+      - bake.json
     cmds:
       - scripts/bakefile.sh
       - defer: rm -f newbake.json
@@ -62,18 +68,23 @@ tasks:
           --config buildkitd.toml
 
   buildkitd.toml:
+    status:
+      - grep -q "max-parallelism = ${BUILDX_MAX_PARALLELISM}\$" buildkitd.toml
     sources:
-      - images/*/*/Dockerfile
+      - templates/buildkitd.template.toml
     generates:
       - ./buildkitd.toml
     cmds:
       - envsubst < templates/buildkitd.template.toml > buildkitd.toml
-    status:
-      - grep -q "max-parallelism = ${BUILDX_MAX_PARALLELISM}\$" buildkitd.toml
 
   bake:
+    preconditions:
+      - sh: 'hash jq'
+        msg: 'You must install jq.'
     status:
       - test $(jq '.target | length' bake.json) -eq 0
+    sources:
+      - images/*/*/Dockerfile
     generates:
       - images/*/*/image.tar
     deps:
@@ -95,25 +106,25 @@ tasks:
       - for: { var: IMAGES }
         task: build-one
         vars:
-          TARBALL: '{{.ITEM}}'
+          IMAGE: '{{.ITEM}}'
 
   build-one:
     preconditions:
-      - sh: test -n "{{.TARBALL}}"
-        msg: Specify the tarball you would like to build with TARBALL variable
-      - sh: test -s "{{.TARBALL}}"
-        msg: '{{.TARBALL}} does not exist or is empty.'
+      - sh: test -n "{{.IMAGE}}"
+        msg: Specify the name of the image you would like to build with IMAGE variable
     sources:
       - '{{.TARBALL}}'
     generates:
       - images/*/built
     cmds:
-      - scripts/build.sh "{{.TARBALL}}"
+      - scripts/build.sh "{{.IMAGE}}"
 
   push:
     preconditions:
       - sh: 'test {{.TASK_MINOR_VERSION}} -ge 28'
         msg: 'Please upgrade Task to v3.28.0 or greater.'
+      - sh: 'hash parallel'
+        msg: 'You must install GNU Parallel.'
     status:
       - test "$PUSH" != "true" && test "$PUSH" != "1"
     sources:
@@ -124,24 +135,7 @@ tasks:
       IMAGES:
         sh: for x in images/*/built; do echo "$(basename $(dirname $x))"; done
     cmds:
-      - for: { var: IMAGES }
-        task: push-one
-        vars:
-          IMAGE: '{{.ITEM}}'
-
-  push-one:
-    sources:
-      - images/{{.IMAGE}}/built
-    generates:
-      - images/{{.IMAGE}}/pushed
-    preconditions:
-      - sh: test -n "{{.IMAGE}}"
-        msg: Specify the image you would like to push with IMAGE variable.
-    status:
-      - test "$PUSH" != "true" && test "$PUSH" != "1"
-    cmds:
-      - docker push --all-tags "{{.NAMESPACE}}/{{.IMAGE}}"
-      - touch images/{{.IMAGE}}/pushed
+      - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --bar --tag scripts/push.sh ::: {{.IMAGES}}'
 
   manifest-create:
     preconditions:

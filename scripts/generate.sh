@@ -95,10 +95,13 @@ for TAGS in $($GETTAGS "${FILTER}"); do
     done
 
     if [[ -n "${PLATFORM_TAGS[*]}" ]]; then
-        list=()
-        for x in ${TAGS//,/ } "${PLATFORM_TAGS[@]}"; do
-            list+=("${NAMESPACE}/${NAME}:$x")
+        # Prefix each platform tag with the namespace and image name.
+        PLATFORM_MANIFEST_IMAGE_TAGS=()
+        for PLATFORM_TAG in "${PLATFORM_TAGS[@]}"; do
+            PLATFORM_MANIFEST_IMAGE_TAGS+=("${NAMESPACE}/${NAME}:${PLATFORM_TAG}")
         done
-        echo "${list[*]}" >> "$SERVICEDIR/MANIFEST_LIST"
+        for x in ${TAGS//,/ }; do
+            echo "${NAMESPACE}/${NAME}:$x ${NAMESPACE}/${NAME}:$x ${PLATFORM_MANIFEST_IMAGE_TAGS[*]}" >> "$SERVICEDIR/MANIFEST_LIST"
+        done
     fi
 done

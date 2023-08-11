@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -euo pipefail
 
 DEBUG=${DEBUG:-false}
 if [[ "$DEBUG" = "true" ]] || [[ "$DEBUG" = "1" ]]; then

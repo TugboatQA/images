@@ -1,0 +1,10 @@
+{
+    "context": "$dir",
+    "dockerfile": "Dockerfile",
+    "output": ["type=docker,dest=$dest"],
+    "platforms": ["$platform"],
+    "tags": ["$tag"],
+    "pull": true,
+    "cache-from": ["type=registry,ref=$registry_cache"],
+    "cache-to": ["type=registry,ref=$registry_cache,mode=max"]
+}

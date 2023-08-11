@@ -2,7 +2,8 @@ FROM {{FROM}}
 
 USER root
 
-RUN apk add --no-cache bash git openssh-client runit
+RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
+    apk add --no-cache bash git openssh-client runit
 
 {{DOCKERFILE}}
 

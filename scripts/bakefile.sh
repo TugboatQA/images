@@ -24,6 +24,7 @@ for dockerfile in images/*/*/Dockerfile; do
     platform=$(cat "$dir/PLATFORM")
     image=${NAMESPACE}/${name}:${tag}
     key=${image//[:\/\.]/-}
+    registry_cache=${NAMESPACE}/${name}-cache:${tag}
 
     # If we are not overwriting and the tar already exists and has a size
     # greater than zero, continue to the next Dockerfile.
@@ -32,14 +33,9 @@ for dockerfile in images/*/*/Dockerfile; do
         continue
     fi
 
-    obj=$(printf '{
-        "context": "%s",
-        "dockerfile": "Dockerfile",
-        "output": ["type=docker,dest=%s"],
-        "platforms": ["%s"],
-        "tags": ["%s"],
-        "pull": true
-    }' "$dir" "$dest" "$platform" "$image")
+    export dir dest platform tag registry_cache
+    obj=$(envsubst < templates/bakefile_target.template.json)
+
     jq --arg key "$key" --argjson obj "$obj" '.target += { ($key): $obj } | .group.default.targets += [$key]' bake.json > newbake.json
     rm bake.json && mv newbake.json bake.json
 done

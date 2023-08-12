@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 
-DIR="images/$1"
+if [[ "$1" = "php-fpm" || "$1" = "php-apache" ]];then
+  DIR="images/php"
+else
+  DIR="images/$1"
+fi
 # mkdir -p won't yell if the directory is there already.
 mkdir -p "$DIR"
+out="$DIR/TAGS.md"
+echo "## Supported Tags for tugboatqa/$1" > $out
+echo "" >> $out
 
-echo "## Supported Tags for tugboatqa/$1"
-echo ""
+cat ${DIR}/*/TAGS | sort -r | sed 's/\ /`,\ `/g' | sed 's/^/*\ `/g' | sed 's/$/`/g' >> $out
 
-cat ${DIR}/*/TAGS | sort -r | sed 's/\ /`,\ `/g' | sed 's/^/*\ `/g' | sed 's/$/`/g'
-
-echo ""
-echo "The above tags are currently supported. Visit https://hub.docker.com/r/tugboatqa/$1/tags/ to see a list of all available tags for this image, including those that are no longer supported."
+echo "" >> $out
+echo "The above tags are currently supported. Visit https://hub.docker.com/r/tugboatqa/$1/tags/ to see a list of all available tags for this image, including those that are no longer supported." >> $out

@@ -13,7 +13,7 @@ all: $(ALL)
 $(SERVICES):
 	./generate $@
 	./build $@
-	./tags $@ > images/$@/TAGS.md
+	./tags $@
 
 elasticsearch:
 	./generate elasticsearch-dockerhub
@@ -25,7 +25,7 @@ php: php-nginx
 	./generate php-apache
 	./generate php-fpm
 	./build php
-	./tags php > images/php/TAGS.md
+	./tags php
 
 clean:
 	rm -rf images

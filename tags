@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 DIR="images/$1"
+# mkdir -p won't yell if the directory is there already.
+mkdir -p "$DIR"
 
 echo "## Supported Tags for tugboatqa/$1"
 echo ""

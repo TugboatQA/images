@@ -3,8 +3,8 @@
     "dockerfile": "Dockerfile",
     "output": ["type=docker,dest=$dest"],
     "platforms": ["$platform"],
-    "tags": ["$tag"],
+    "tags": ["$image"],
     "pull": true,
-    "cache-from": ["type=registry,ref=$registry_cache"],
-    "cache-to": ["type=registry,ref=$registry_cache,mode=max"]
+    "cache-from": ["$s3_cache"],
+    "cache-to": ["$s3_cache"]
 }

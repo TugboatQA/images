@@ -6,14 +6,7 @@ if [[ "$DEBUG" = "true" ]] || [[ "$DEBUG" = "1" ]]; then
     set -x
 fi
 
-echo '{
-  "group": {
-    "default": {
-      "targets": []
-    }
-  },
-  "target": {}
-}' > bake.json
+cat templates/bakefile.template.json > bake.json
 
 for dockerfile in images/*/*/Dockerfile; do
     dir=$(dirname "$dockerfile")
@@ -24,7 +17,8 @@ for dockerfile in images/*/*/Dockerfile; do
     platform=$(cat "$dir/PLATFORM")
     image=${NAMESPACE}/${name}:${tag}
     key=${image//[:\/\.]/-}
-    registry_cache=${NAMESPACE}/${name}-cache:${tag}
+    #registry_cache=${NAMESPACE}/layer-cache:$key
+    s3_cache="type=s3,region=$AWS_REGION,bucket=$AWS_S3_BUCKET,name=$key,mode=max"
 
     # If we are not overwriting and the tar already exists and has a size
     # greater than zero, continue to the next Dockerfile.
@@ -33,7 +27,7 @@ for dockerfile in images/*/*/Dockerfile; do
         continue
     fi
 
-    export dir dest platform tag registry_cache
+    export dir dest platform image s3_cache
     obj=$(envsubst < templates/bakefile_target.template.json)
 
     jq --arg key "$key" --argjson obj "$obj" '.target += { ($key): $obj } | .group.default.targets += [$key]' bake.json > newbake.json

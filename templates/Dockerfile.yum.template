@@ -2,9 +2,8 @@ FROM {{FROM}}
 
 USER root
 
-RUN --mount=type=cache,target=/var/cache/yum,sharing=locked \
-    yum install -y git sudo openssh-clients ca-certificates net-tools bzip2 \
-        vim-enhanced nmap-ncat make gcc gcc-c++ rsync wget tar && \
+RUN yum install -y git sudo openssh-clients ca-certificates net-tools bzip2 \
+      vim-enhanced nmap-ncat make gcc gcc-c++ rsync wget tar && \
     \
     ( yum install -y glibc-static || \
       yum --enablerepo=powertools install -y glibc-static || \

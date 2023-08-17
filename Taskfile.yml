@@ -71,6 +71,7 @@ tasks:
     deps:
       - buildkitd.toml
     status:
+      # Exits zero (up to date) if there is already a builder.
       - docker buildx ls | grep -q '^{{.BUILDX_BUILDER}}\s'
     cmds:
       - docker buildx create
@@ -91,6 +92,7 @@ tasks:
     preconditions:
       - *require_jq
     status:
+      # Exits zero (up to date) if there are no targets.
       - test $(jq '.target | length' bake.json) -eq 0
     deps:
       - bakefile
@@ -102,7 +104,8 @@ tasks:
     preconditions:
       - *require_parallel
     status:
-      - test -n "{{.TARBALLS}}"
+      # Exits zero (up to date) if there are no tarballs.
+      - test -z "{{.TARBALLS}}"
     vars:
       TARBALLS:
         # We loop over any image.tar files to be sure we only build images that
@@ -115,14 +118,11 @@ tasks:
     preconditions:
       - *require_parallel
     status:
-      - test "$PUSH" != "true" && test "$PUSH" != "1"
-    sources:
-      - images/*/built/*
-    generates:
-      - images/*/pushed
+      # Exits zero (up to date) if there are no images OR PUSH is falsey.
+      - test -z "{{.IMAGES}}" || (test "$PUSH" != "true" && test "$PUSH" != "1")
     vars:
       IMAGES:
-        sh: for x in images/*/built; do echo "$(basename $(dirname $x))"; done
+        sh: test -d images/*/built && for x in images/*/built; do echo "$(basename $(dirname $x))"; done || true
     cmds:
       - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --bar --tag scripts/push.sh ::: $(echo "{{.IMAGES}}")'
 

@@ -32,6 +32,7 @@ tasks:
     silent: true
     cmds:
       - 'parallel SERVICEDIR={} task generate ::: {{.TARGETS}}'
+      - task: bakefile
       - task: bake
       - task: build
       - task: push
@@ -46,6 +47,8 @@ tasks:
     preconditions:
       - sh: 'test -n "{{.SERVICEDIR}}"'
         msg: 'Specify the subdirectory name of the service with a SERVICEDIR environment variable.'
+      - sh: 'test -d "services/{{.SERVICEDIR}}"'
+        msg: 'services/{{.SERVICEDIR}} does not exist.'
     sources:
       - services/{{.SERVICEDIR}}/**
       - templates/Dockerfile.*.template
@@ -89,10 +92,6 @@ tasks:
       - *require_jq
     status:
       - test $(jq '.target | length' bake.json) -eq 0
-    sources:
-      - images/*/*/Dockerfile
-    generates:
-      - images/*/*/image.tar
     deps:
       - bakefile
       - create-builder
@@ -102,13 +101,15 @@ tasks:
   build:
     preconditions:
       - *require_parallel
+    status:
+      - test -n "{{.TARBALLS}}"
     vars:
-      IMAGES:
+      TARBALLS:
         # We loop over any image.tar files to be sure we only build images that
         # still need to be built.
-        sh: for x in images/*/*/image.tar; do basename $(dirname $(dirname $x)); done | sort | uniq
+        sh: echo images/*/*/image.tar
     cmds:
-      - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --bar --tag scripts/build.sh ::: $(echo "{{.IMAGES}}")'
+      - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --bar --tag scripts/build.sh ::: {{.TARBALLS}}'
 
   push:
     preconditions:
@@ -123,7 +124,7 @@ tasks:
       IMAGES:
         sh: for x in images/*/built; do echo "$(basename $(dirname $x))"; done
     cmds:
-      - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --bar --tag scripts/push.sh ::: {{.IMAGES}}'
+      - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --bar --tag scripts/push.sh ::: $(echo "{{.IMAGES}}")'
 
   manifest-create:
     preconditions:
@@ -159,7 +160,7 @@ tasks:
       IMAGES:
         sh: for x in images/*; do echo "$(basename $x)"; done
     cmds:
-      - for: { var: IMAGES, as: IMAGE }
-        cmd: docker rmi --force $(docker images ls --filter=reference="{{.NAMESPACE}}/{{.IMAGE}}" -q | sort | uniq) || true
       - rm -f bake.json buildkitd.toml
       - rm -Rf images
+      - for: { var: IMAGES, as: IMAGE }
+        cmd: docker rmi --force $(docker images ls --filter=reference="{{.NAMESPACE}}/{{.IMAGE}}" -q | sort | uniq) || true

@@ -4,7 +4,5 @@
     "output": ["type=docker,dest=$dest"],
     "platforms": ["$platform"],
     "tags": ["$image"],
-    "pull": true,
-    "cache-from": ["$s3_cache"],
-    "cache-to": ["$s3_cache"]
+    "pull": true$cache_block
 }

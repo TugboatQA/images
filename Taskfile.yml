@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: 3
 
+# The following are named snippets to avoid duplication.
 require_jq: &require_jq
   sh: 'command -v jq'
   msg: 'You must install jq.'
@@ -22,13 +23,27 @@ vars:
 
 tasks:
   default:
-    vars:
-      TARGETS:
-        sh: echo $(find services -type d -maxdepth 1 -mindepth 1 -exec basename {} \;)
+    desc: 'Builds the docker images. See --summary for more options.'
+    summary: |
+      This command will build docker images for all the services listed in the
+      services directory.
+
+      You need to have Task v3.28.0 or greater, GNU parallel, and jq.
+
+      Optionally, you may run just a subset of those by passing the subdirs you
+      would like to build after a double dash. For example, the following would
+      build just the php-nginx and php-apache images:
+
+      $ task -- php-nginx php-apache
     preconditions:
+      - *require_parallel
       - *require_v28
       - *require_jq
-      - *require_parallel
+    vars:
+      TARGETS:
+        # If CLI_ARGS has items in it, those are our targets. Otherwise, use all
+        # the subdirectories in /services.
+        sh: test -n '{{.CLI_ARGS}}' && echo '{{.CLI_ARGS}}' || echo $(find services -type d -maxdepth 1 -mindepth 1 -exec basename {} \;)
     silent: true
     cmds:
       - 'parallel SERVICEDIR={} task generate ::: {{.TARGETS}}'
@@ -36,7 +51,7 @@ tasks:
       - task: bake
       - task: build
       - task: push
-      - task: manifest-create
+      - task: push-manifests
 
   generate:
     vars:
@@ -100,12 +115,23 @@ tasks:
     cmds:
       - docker buildx bake --builder '{{.BUILDX_BUILDER}}' --file ./bake.json
 
+  ensure-s3:
+    internal: true
+    status:
+      - test -n "$AWS_REGION" && test -n "$AWS_S3_BUCKET" && test -n "$AWS_ACCESS_KEY_ID" && test -n "$AWS_SECRET_ACCESS_KEY"
+    cmd:
+      task: s3-prompt
+  s3-prompt:
+    internal: true
+    prompt: It looks like you aren't configured to use a docker layer cache on
+      S3. Would you like to continue with just a local cache?
+
   build:
     preconditions:
       - *require_parallel
     status:
       # Exits zero (up to date) if there are no tarballs.
-      - test -z "{{.TARBALLS}}"
+      - test -z "{{.TARBALLS}}" || test "{{.TARBALLS}}" = "images/*/*/image.tar"
     vars:
       TARBALLS:
         # We loop over any image.tar files to be sure we only build images that
@@ -122,27 +148,27 @@ tasks:
       - test -z "{{.IMAGES}}" || (test "$PUSH" != "true" && test "$PUSH" != "1")
     vars:
       IMAGES:
-        sh: test -d images/*/built && for x in images/*/built; do echo "$(basename $(dirname $x))"; done || true
+        sh: find images -type d -name built -exec sh -c 'basename $(dirname {})' \;
     cmds:
       - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --bar --tag scripts/push.sh ::: $(echo "{{.IMAGES}}")'
 
-  manifest-create:
+  push-manifests:
     preconditions:
       - *require_v28
     status:
-      - test "$PUSH" != "true" && test "$PUSH" != "1"
-    sources:
-      - images/*/MANIFEST_LIST
+      # Exits zero if PUSH is falsey or there are no manifest lists.
+      - test "$PUSH" != "true" && test "$PUSH" != "1" || test "{{.MANIFEST_LISTS}}" = "images/*/MANIFEST_LIST"
     vars:
       MANIFEST_LISTS:
         sh: echo images/*/MANIFEST_LIST
     cmds:
       - for: { var: MANIFEST_LISTS }
-        task: manifest-create-one
+        task: push-manifest
         vars:
           MANIFEST_LIST: '{{.ITEM}}'
 
-  manifest-create-one:
+  push-manifest:
+    internal: true
     preconditions:
       - sh: test -n "{{.MANIFEST_LIST}}"
         msg: Specify the path to the manifest list you would like to create with MANIFEST_LIST variable.
@@ -154,13 +180,37 @@ tasks:
       - scripts/manifest.sh {{.MANIFEST_LIST}}
 
   clean:
-    preconditions:
-      - *require_v28
-    vars:
-      IMAGES:
-        sh: for x in images/*; do echo "$(basename $x)"; done
+    prompt: This will remove any generated files and delete all docker images in
+            the {{.NAMESPACE}}/* namespace. Do you want to continue?
+    deps:
+      - rm-files
+      - rm-images
+
+  clean-all:
+    deps:
+      - rm-builder
+      - rm-files
+      - rm-images
+    prompt: This will remove the buildkit builder, all generated files, and
+      delete all docker images in the {{.NAMESPACE}}/* namespace. Do you
+      want to continue?
+
+  rm-builder:
+    internal: true
+    status:
+      - if docker buildx ls | grep -q '^{{.BUILDX_BUILDER}}\s'; then exit 1; fi
+    cmd: docker buildx rm -f '{{.BUILDX_BUILDER}}'
+  rm-files:
+    internal: true
     cmds:
       - rm -f bake.json buildkitd.toml
       - rm -Rf images
-      - for: { var: IMAGES, as: IMAGE }
-        cmd: docker rmi --force $(docker images ls --filter=reference="{{.NAMESPACE}}/{{.IMAGE}}" -q | sort | uniq) || true
+  rm-images:
+    internal: true
+    status:
+      - test -z "{{.IMAGES}}"
+    vars:
+      IMAGES:
+        sh: docker images ls --filter=reference="{{.NAMESPACE}}/*" -q | sort | uniq
+    cmd: docker rmi --force $(echo "{{.IMAGES}}") || true
+

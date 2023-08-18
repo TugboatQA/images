@@ -17,8 +17,12 @@ for dockerfile in images/*/*/Dockerfile; do
     platform=$(cat "$dir/PLATFORM")
     image=${NAMESPACE}/${name}:${tag}
     key=${image//[:\/\.]/-}
-    #registry_cache=${NAMESPACE}/layer-cache:$key
     s3_cache="type=s3,region=$AWS_REGION,bucket=$AWS_S3_BUCKET,name=$key,mode=max"
+    cache_block=
+
+    if [[ -n "$AWS_REGION" ]] && [[ -n "$AWS_S3_BUCKET" ]] && [[ -n "$AWS_ACCESS_KEY_ID" ]] && [[ -n "$AWS_SECRET_ACCESS_KEY" ]]; then
+        cache_block=$(printf ',"cache-from": ["%s"],"cache-to": ["%s"]' "$s3_cache" "$s3_cache" )
+    fi
 
     # If we are not overwriting and the tar already exists and has a size
     # greater than zero, continue to the next Dockerfile.
@@ -27,7 +31,7 @@ for dockerfile in images/*/*/Dockerfile; do
         continue
     fi
 
-    export dir dest platform image s3_cache
+    export dir dest platform image cache_block
     obj=$(envsubst < templates/bakefile_target.template.json)
 
     jq --arg key "$key" --argjson obj "$obj" '.target += { ($key): $obj } | .group.default.targets += [$key]' bake.json > newbake.json

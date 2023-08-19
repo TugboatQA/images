@@ -16,7 +16,7 @@ for dockerfile in images/*/*/Dockerfile; do
     tag=$(cut -d' ' -f1 < "$dir/TAGS")
     platform=$(cat "$dir/PLATFORM")
     image=${NAMESPACE}/${name}:${tag}
-    key=${image//[:\/\.]/-}
+    key=${name}-${tag//\./-}
     s3_cache="type=s3,region=$AWS_REGION,bucket=$AWS_S3_BUCKET,name=$key,mode=max"
     cache_block=
 

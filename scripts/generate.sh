@@ -6,36 +6,42 @@ if [[ "$DEBUG" = "true" ]] || [[ "$DEBUG" = "1" ]]; then
 fi
 
 function getTags() {
-    TEMP=$(mktemp -d)
-    FILTER=$1
+    temp=$(mktemp -d)
+    filter=$1
 
-    # Get the official image config, split them into separate temp files
     SOURCE="${SOURCE:-https://raw.githubusercontent.com/docker-library/official-images/master/library/${NAME}}"
+    # Get the official image config, split them into separate temp files
     curl --silent --location --fail --retry 3 "${SOURCE}" | \
-        awk -v TEMP="$TEMP" -v RS= '{ print > (TEMP"/image" ++CNT) }'
+        awk -v TEMP="$temp" -v RS= '{ print > (TEMP"/image" ++CNT) }'
+
+    if ! compgen -G "$temp/*" > /dev/null; then
+        echo "Unable to find any image config for $NAME" 1>&2;
+        exit 1
+    fi
 
     # Parse each image definition individually.
-    for FILE in "$TEMP"/*; do
-        grep '^Tags\|^SharedTags' "${FILE}" |
+    for file in "$temp"/*; do
+        grep '^Tags\|^SharedTags' "${file}" |
             tr '\n' ';' |
             perl -pe 's/;SharedTags:/,/g;' -e 's/;/\n/g' |
             sort |
             sed 's/^.*Tags: //g' |
             grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver -e alpha -e beta |
-            ${FILTER} |
+            ${filter} |
             sed 's/, /,/g'
     done
 
     # Clean up
-    rm -rf "${TEMP}"
+    rm -rf "${temp}"
 }
 
-DIR="services/$1"
+dir="services/$1"
 
-if [ -e "${DIR}/manifest" ]; then
-    source "${DIR}/manifest"
+if [ -e "${dir}/manifest" ]; then
+    source "${dir}/manifest"
 fi
 
+# Read in the globals from the manifest and use defaults if empty.
 NAME=${NAME:-$1}
 FROM=${FROM:-$NAME}
 SERVICE=${SERVICE:-$NAME}
@@ -45,63 +51,63 @@ GETTAGS=${GETTAGS:-getTags}
 # Read in comma-separated platforms as a bash array.
 IFS=',' read -r -a PLATFORMS <<< "${PLATFORMS:-linux/amd64}"
 
-SERVICEDIR="images/${SERVICE}"
-mkdir -p "${SERVICEDIR}"
+servicedir="images/${SERVICE}"
+mkdir -p "${servicedir}"
 
-for TAGS in $($GETTAGS "${FILTER}"); do
-    TAG=$(echo "${TAGS}" | cut -d, -f1)
-    PLATFORM_TAGS=()
+for tags in $($GETTAGS "${FILTER}"); do
+    tag=$(echo "${tags}" | cut -d, -f1)
+    platform_tags=()
 
-    for PLATFORM in "${PLATFORMS[@]}"; do
-        PLATFORM_SUFFIX=$(test "$PLATFORM" = "linux/amd64" || echo "-${PLATFORM//\//-}")
-        IMGDIR="${SERVICEDIR}/${TAG}${PLATFORM_SUFFIX}"
-        IMAGE="${FROM}:${TAG}"
-        mkdir -p "${IMGDIR}"
+    for platform in "${PLATFORMS[@]}"; do
+        platform_suffix=$(test "$platform" = "linux/amd64" || echo "-${platform//\//-}")
+        imgdir="${servicedir}/${tag}${platform_suffix}"
+        image="${FROM}:${tag}"
+        mkdir -p "${imgdir}"
 
         RUN=""
-        if [ -e "${DIR}/run" ]; then
-            cp "${DIR}/run" "${IMGDIR}/run"
-            chmod 755 "${IMGDIR}/run"
+        if [ -e "${dir}/run" ]; then
+            cp "${dir}/run" "${imgdir}/run"
+            chmod 755 "${imgdir}/run"
             RUN="RUN mkdir -p /etc/service/${SERVICE}\nCOPY run /etc/service/${SERVICE}/run"
         fi
 
-        DOCKERFILE=/dev/null
-        if [ -e "${DIR}/Dockerfile" ]; then
-            DOCKERFILE="${DIR}/Dockerfile"
+        dockerfile=/dev/null
+        if [ -e "${dir}/Dockerfile" ]; then
+            dockerfile="${dir}/Dockerfile"
         fi
 
-        cp -r "${DIR}/../../share" "${IMGDIR}/"
-        if [ -e "${DIR}/files" ]; then
-            cp -r "${DIR}/files" "${IMGDIR}/"
+        cp -r "${dir}/../../share" "${imgdir}/"
+        if [ -e "${dir}/files" ]; then
+            cp -r "${dir}/files" "${imgdir}/"
         fi
 
         cat "templates/Dockerfile.${TEMPLATE}.template" | \
-            sed "s|{{FROM}}|${IMAGE}|g" | \
-            sed "/{{DOCKERFILE}}/ r ${DOCKERFILE}" | \
+            sed "s|{{FROM}}|${image}|g" | \
+            sed "/{{DOCKERFILE}}/ r ${dockerfile}" | \
             sed "/{{DOCKERFILE}}/d" | \
             perl -pe "s|\{\{RUN\}\}|${RUN}|g" \
-            > "${IMGDIR}/Dockerfile"
+            > "${imgdir}/Dockerfile"
 
         # If there isn't a suffix, we want all tags and aliases. Otherwise, we
         # just create a single tag with the platform suffix.
-        if [[ -z "$PLATFORM_SUFFIX" ]]; then
-            echo "${TAGS}" | tr ',' ' ' > "${IMGDIR}/TAGS"
+        if [[ -z "$platform_suffix" ]]; then
+            echo "${tags}" | tr ',' ' ' > "${imgdir}/TAGS"
         else
-            PLATFORM_TAGS+=("$TAG$PLATFORM_SUFFIX")
-            echo "$TAG$PLATFORM_SUFFIX" > "${IMGDIR}/TAGS"
+            platform_tags+=("${tag}${platform_suffix}")
+            echo "${tag}${platform_suffix}" > "${imgdir}/TAGS"
         fi
-        echo "${NAME}" > "${IMGDIR}/NAME"
-        echo "${PLATFORM}" > "${IMGDIR}/PLATFORM"
+        echo "${NAME}" > "${imgdir}/NAME"
+        echo "${platform}" > "${imgdir}/PLATFORM"
     done
 
-    if [[ -n "${PLATFORM_TAGS[*]}" ]]; then
+    if [[ -n "${platform_tags[*]}" ]]; then
         # Prefix each platform tag with the namespace and image name.
-        PLATFORM_MANIFEST_IMAGE_TAGS=()
-        for PLATFORM_TAG in "${PLATFORM_TAGS[@]}"; do
-            PLATFORM_MANIFEST_IMAGE_TAGS+=("${NAMESPACE}/${NAME}:${PLATFORM_TAG}")
+        platform_manifest_image_tags=()
+        for platform_tag in "${platform_tags[@]}"; do
+            platform_manifest_image_tags+=("${NAMESPACE}/${NAME}:${platform_tag}")
         done
-        for x in ${TAGS//,/ }; do
-            echo "${NAMESPACE}/${NAME}:$x ${NAMESPACE}/${NAME}:$x ${PLATFORM_MANIFEST_IMAGE_TAGS[*]}" >> "$SERVICEDIR/MANIFEST_LIST"
+        for x in ${tags//,/ }; do
+            echo "${NAMESPACE}/${NAME}:$x ${NAMESPACE}/${NAME}:$x ${platform_manifest_image_tags[*]}" >> "$servicedir/MANIFEST_LIST"
         done
     fi
 done

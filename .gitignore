@@ -15,3 +15,14 @@
 
 # Resulting image Dockerfiles
 /images
+
+# Task checksums
+.task
+
+# Generated Bake file and buildkit files
+bake.json
+buildkitd.toml
+
+# Local dotenv files
+.env.local
+.local.env

@@ -1,0 +1,5 @@
+[worker.oci]
+  max-parallelism = $BUILDX_MAX_PARALLELISM
+  gc = true
+  # This value is in MiB
+  gckeepstorage = 50000

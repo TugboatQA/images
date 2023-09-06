@@ -17,7 +17,7 @@ on:
 env:
   TASK_VERSION: v3.29.1
   TASK_CHECKSUM: e411770abf73d5e094100ab7a1c8278f35b591ecadbfd778200b6b2ad1ee340b
-  PUSH: ${{ inputs.push == false && 'false' || 'true' }}
+  PUSH: ${{ toJSON(inputs.push) == 'false' && 'false' || 'true' }}
 
 jobs:
   matrix:
@@ -69,7 +69,7 @@ jobs:
   docs:
     needs: build
     runs-on: ubuntu-latest
-    if: ${{ always() && "${{ env.PUSH }}" == "true" && contains(needs.*.result, 'success') }}
+    if: always() && contains(needs.*.result, 'success')
     steps:
       - name: Install dependencies
         run: sudo apt-get update
@@ -107,6 +107,11 @@ jobs:
       - name: Commit and push
         working-directory: dockerfiles
         run: |
+          test "$PUSH" != "1" \
+            && test "$PUSH" != "true" \
+            && echo "Skipping push: PUSH=$PUSH" \
+            && exit 0 \
+            || echo "Pushing to TugboatQA/dockerfiles: PUSH=$PUSH"
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add . && git diff --cached --exit-code || (git commit -m "$GITHUB_RUN_NUMBER" && git push)

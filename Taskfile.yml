@@ -136,7 +136,7 @@ tasks:
         # still need to be built.
         sh: find images/*/* -maxdepth 1 -name image.tar
     cmds:
-      - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --bar --tag scripts/build.sh ::: $(echo "{{.TARBALLS}}")'
+      - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --tag scripts/build.sh ::: $(echo "{{.TARBALLS}}")'
 
   push:
     desc: '[subtask] Push all images to docker.io. Be sure PUSH is set to true in your .env.local.'

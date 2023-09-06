@@ -19,7 +19,7 @@ for dockerfile in images/*/*/Dockerfile; do
     key=${name}-${tag//\./-}
     cache_block=
 
-    if [[ -n "$GITHUB_ACTIONS" ]]; then
+    if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
         cache="type=gha,scope=$GITHUB_REF_NAME-$key,mode=max"
         cache_block=$(printf ',"cache-from": ["%s"],"cache-to": ["%s"]' "$cache" "$cache" )
     fi

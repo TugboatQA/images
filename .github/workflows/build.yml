@@ -33,7 +33,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
@@ -65,3 +64,48 @@ jobs:
         name: Expose GitHub Runtime
         uses: crazy-max/ghaction-github-runtime@v2
       - run: task -- ${{ matrix.service }}
+        id: task
+        continue-on-error: true
+  docs:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ always() && env.PUSH == "true" && contains(needs.*.result, 'success') }}
+    steps:
+      - name: Install dependencies
+        run: sudo apt-get update
+          && sudo apt-get install -y curl rsync
+          && curl -L -o /tmp/task_linux_amd64.deb https://github.com/go-task/task/releases/download/${{ env.TASK_VERSION }}/task_linux_amd64.deb
+          && sha256sum /tmp/task_linux_amd64.deb | grep -q ${{ env.TASK_CHECKSUM }}
+          && sudo dpkg -i /tmp/task_linux_amd64.deb
+          && sudo apt-get clean
+          && sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+      - name: Checkout TugboatQA/images
+        uses: actions/checkout@v3
+        with:
+          path: images
+      - name: Checkout TugboatQA/dockerfiles
+        uses: actions/checkout@v3
+        with:
+          repository: TugboatQA/dockerfiles
+          path: dockerfiles
+      - name: Generate docs
+        working-directory: images
+        run: task generate && task prepare-docs
+      - name: Sync docs
+        run: rsync -av
+          --delete
+          --exclude .git
+          --exclude LICENSE
+          --exclude README.md
+          --exclude MANIFEST_LIST
+          --exclude '*/built'
+          images/images/ dockerfiles/
+      - name: Commit and push
+        uses: webfactory/ssh-agent@d4b9b8ff72958532804b70bbe600ad43b36d5f2e
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        working-directory: dockerfiles
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add . && git diff --cached --exit-code || (git commit -m "$GITHUB_RUN_NUMBER" && git push)

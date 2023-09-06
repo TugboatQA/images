@@ -69,7 +69,7 @@ jobs:
   docs:
     needs: build
     runs-on: ubuntu-latest
-    if: ${{ always() && env.PUSH == "true" && contains(needs.*.result, 'success') }}
+    if: ${{ always() && "${{ env.PUSH }}" == "true" && contains(needs.*.result, 'success') }}
     steps:
       - name: Install dependencies
         run: sudo apt-get update

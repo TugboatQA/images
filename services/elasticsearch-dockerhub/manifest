@@ -1,4 +1,3 @@
 NAME=elasticsearch
 FROM=elasticsearch
 SERVICE=elasticsearch
-FILTER="grep ^2"

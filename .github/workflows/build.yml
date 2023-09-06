@@ -1,0 +1,44 @@
+name: build
+
+on:
+  - push
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: echo "matrix={\"include\":[{\"service\":\"httpd\"},{\"service\":\"node\"}]}" >> $GITHUB_OUTPUT
+  build:
+    needs: matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get update
+          && sudo apt-get install -y eatmydata
+          && sudo ln -snf /usr/bin/eatmydata /usr/local/bin/apt-get
+          && sudo apt-get install -y parallel jq curl
+          && curl -L -o /tmp/task_linux_amd64.deb https://github.com/go-task/task/releases/download/v3.29.1/task_linux_amd64.deb
+          && sha256sum /tmp/task_linux_amd64.deb | grep -q e411770abf73d5e094100ab7a1c8278f35b591ecadbfd778200b6b2ad1ee340b
+          && sudo dpkg -i /tmp/task_linux_amd64.deb
+          && sudo apt-get clean
+          && sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+      -
+        # Add support for more platforms with QEMU (optional)
+        # https://github.com/docker/setup-qemu-action
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        # Expose the actions cache url and token.
+        # https://github.com/tonistiigi/go-actions-cache/blob/master/api.md#authentication
+        name: Expose GitHub Runtime
+        uses: crazy-max/ghaction-github-runtime@v2
+      - run: task -- ${{ matrix.service }}

@@ -123,17 +123,6 @@ tasks:
     cmds:
       - docker buildx bake --builder '{{.BUILDX_BUILDER}}' --file ./bake.json
 
-  ensure-s3:
-    internal: true
-    status:
-      - test -n "$AWS_REGION" && test -n "$AWS_S3_BUCKET" && test -n "$AWS_ACCESS_KEY_ID" && test -n "$AWS_SECRET_ACCESS_KEY"
-    cmd:
-      task: s3-prompt
-  s3-prompt:
-    internal: true
-    prompt: It looks like you aren't configured to use a docker layer cache on
-      S3. Would you like to continue with only a local cache?
-
   build:
     desc: '[subtask] Build any docker image tarballs generated from bake for Tugboat usage.'
     preconditions:

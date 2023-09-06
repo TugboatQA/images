@@ -83,9 +83,3 @@ override values in the `.env`, you may do so in a `.env.local`.
 - `task -- chicken duck`: builds just the `chicken` and `duck` service, if there were such things.
 - `task clean`: to clean the files on disk (without losing your local cache in the docker builder.)
 - `task clean-all`: to remove all files on disk and the docker builder.
-
-### S3 Layer cache
-
-To speed up frequent builds on your environment, you can use an
-[S3 layer cache](https://docs.docker.com/build/cache/backends/s3/).
-See the `.env` for the `AWS_*` environment variables necessary for this.

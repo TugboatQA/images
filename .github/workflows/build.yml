@@ -100,10 +100,11 @@ jobs:
           --exclude MANIFEST_LIST
           --exclude '*/built'
           images/images/ dockerfiles/
-      - name: Commit and push
+      - name: Configure SSH Agent
         uses: webfactory/ssh-agent@d4b9b8ff72958532804b70bbe600ad43b36d5f2e
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Commit and push
         working-directory: dockerfiles
         run: |
           git config user.name github-actions

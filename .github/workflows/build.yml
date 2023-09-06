@@ -1,7 +1,23 @@
 name: build
 
 on:
-  - push
+  push:
+  workflow_dispatch:
+    inputs:
+      push:
+        description: Whether to push to Docker hub after build is complete.
+        default: true
+        type: boolean
+      services:
+        description: Space delimited string of services to build. If empty, all will be built.
+        type: string
+  schedule:
+    - cron: '0 0 * * 6'
+
+env:
+  TASK_VERSION: v3.29.1
+  TASK_CHECKSUM: e411770abf73d5e094100ab7a1c8278f35b591ecadbfd778200b6b2ad1ee340b
+  PUSH: ${{ inputs.push == false && 'false' || 'true' }}
 
 jobs:
   matrix:
@@ -11,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - id: set-matrix
-        run: scripts/gha-matrix.sh >> $GITHUB_OUTPUT
+        run: scripts/gha-matrix.sh ${{ inputs.services }} >> $GITHUB_OUTPUT
   build:
     needs: matrix
     runs-on: ubuntu-latest
@@ -25,8 +41,8 @@ jobs:
           && sudo apt-get install -y eatmydata
           && sudo ln -snf /usr/bin/eatmydata /usr/local/bin/apt-get
           && sudo apt-get install -y parallel jq curl
-          && curl -L -o /tmp/task_linux_amd64.deb https://github.com/go-task/task/releases/download/v3.29.1/task_linux_amd64.deb
-          && sha256sum /tmp/task_linux_amd64.deb | grep -q e411770abf73d5e094100ab7a1c8278f35b591ecadbfd778200b6b2ad1ee340b
+          && curl -L -o /tmp/task_linux_amd64.deb https://github.com/go-task/task/releases/download/${{ env.TASK_VERSION }}/task_linux_amd64.deb
+          && sha256sum /tmp/task_linux_amd64.deb | grep -q ${{ env.TASK_CHECKSUM }}
           && sudo dpkg -i /tmp/task_linux_amd64.deb
           && sudo apt-get clean
           && sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -48,4 +64,4 @@ jobs:
         # https://github.com/tonistiigi/go-actions-cache/blob/master/api.md#authentication
         name: Expose GitHub Runtime
         uses: crazy-max/ghaction-github-runtime@v2
-      - run: PUSH=1 task -- ${{ matrix.service }}
+      - run: task -- ${{ matrix.service }}

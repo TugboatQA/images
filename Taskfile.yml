@@ -141,7 +141,7 @@ tasks:
   push:
     desc: '[subtask] Push all images to docker.io. Be sure PUSH is set to true in your .env.local.'
     preconditions:
-      - *require_parallel
+      - *require_v28
     status:
       # Exits zero (up to date) if there are no images OR PUSH is falsey.
       - test -z "{{.IMAGES}}" || (test "$PUSH" != "true" && test "$PUSH" != "1")
@@ -149,7 +149,19 @@ tasks:
       IMAGES:
         sh: find images/* -type d -name built -maxdepth 1 -exec sh -c 'basename $(dirname {})' \;
     cmds:
-      - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --bar --tag scripts/push.sh ::: $(echo "{{.IMAGES}}")'
+      - for: { var: IMAGES }
+        task: push-one
+        vars:
+          IMAGE: '{{.ITEM}}'
+
+  push-one:
+    internal: true
+    preconditions:
+      - sh: test -n "{{.IMAGE}}"
+        msg: Specify an image with the environment variable IMAGE.
+      - sh: test "$PUSH" = "true" || test "$PUSH" = "1"
+        msg: PUSH is disabled.
+    cmd: scripts/push.sh {{.IMAGE}}
 
   push-manifests:
     desc: '[subtask] Push all manifest lists to docker.io. Be sure PUSH is set to true in your .env.local.'

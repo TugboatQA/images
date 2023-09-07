@@ -46,7 +46,6 @@ tasks:
       - task: build
       - task: push
       - task: push-manifests
-      - task: prepare-docs
 
   generate:
     desc: '[subtask] Generate Dockerfiles for the services.'
@@ -123,17 +122,6 @@ tasks:
     cmds:
       - docker buildx bake --builder '{{.BUILDX_BUILDER}}' --file ./bake.json
 
-  ensure-s3:
-    internal: true
-    status:
-      - test -n "$AWS_REGION" && test -n "$AWS_S3_BUCKET" && test -n "$AWS_ACCESS_KEY_ID" && test -n "$AWS_SECRET_ACCESS_KEY"
-    cmd:
-      task: s3-prompt
-  s3-prompt:
-    internal: true
-    prompt: It looks like you aren't configured to use a docker layer cache on
-      S3. Would you like to continue with only a local cache?
-
   build:
     desc: '[subtask] Build any docker image tarballs generated from bake for Tugboat usage.'
     preconditions:
@@ -147,12 +135,12 @@ tasks:
         # still need to be built.
         sh: find images/*/* -maxdepth 1 -name image.tar
     cmds:
-      - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --bar --tag scripts/build.sh ::: $(echo "{{.TARBALLS}}")'
+      - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --tag scripts/build.sh ::: $(echo "{{.TARBALLS}}")'
 
   push:
     desc: '[subtask] Push all images to docker.io. Be sure PUSH is set to true in your .env.local.'
     preconditions:
-      - *require_parallel
+      - *require_v28
     status:
       # Exits zero (up to date) if there are no images OR PUSH is falsey.
       - test -z "{{.IMAGES}}" || (test "$PUSH" != "true" && test "$PUSH" != "1")
@@ -160,7 +148,19 @@ tasks:
       IMAGES:
         sh: find images/* -type d -name built -maxdepth 1 -exec sh -c 'basename $(dirname {})' \;
     cmds:
-      - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --bar --tag scripts/push.sh ::: $(echo "{{.IMAGES}}")'
+      - for: { var: IMAGES }
+        task: push-one
+        vars:
+          IMAGE: '{{.ITEM}}'
+
+  push-one:
+    internal: true
+    preconditions:
+      - sh: test -n "{{.IMAGE}}"
+        msg: Specify an image with the environment variable IMAGE.
+      - sh: test "$PUSH" = "true" || test "$PUSH" = "1"
+        msg: PUSH is disabled.
+    cmd: scripts/push.sh {{.IMAGE}}
 
   push-manifests:
     desc: '[subtask] Push all manifest lists to docker.io. Be sure PUSH is set to true in your .env.local.'

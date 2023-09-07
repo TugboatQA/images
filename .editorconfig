@@ -12,5 +12,5 @@ indent_size=4
 [Makefile]
 indent_style = tab
 
-[Taskfile*yml]
+[*.yml]
 indent_size = 2

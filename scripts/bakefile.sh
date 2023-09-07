@@ -17,11 +17,11 @@ for dockerfile in images/*/*/Dockerfile; do
     platform=$(cat "$dir/PLATFORM")
     image=${NAMESPACE}/${name}:${tag}
     key=${name}-${tag//\./-}
-    s3_cache="type=s3,region=$AWS_REGION,bucket=$AWS_S3_BUCKET,name=$key,mode=max"
     cache_block=
 
-    if [[ -n "$AWS_REGION" ]] && [[ -n "$AWS_S3_BUCKET" ]] && [[ -n "$AWS_ACCESS_KEY_ID" ]] && [[ -n "$AWS_SECRET_ACCESS_KEY" ]]; then
-        cache_block=$(printf ',"cache-from": ["%s"],"cache-to": ["%s"]' "$s3_cache" "$s3_cache" )
+    if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+        cache="type=gha,scope=$GITHUB_REF_NAME-$key,mode=max"
+        cache_block=$(printf ',"cache-from": ["%s"],"cache-to": ["%s"]' "$cache" "$cache" )
     fi
 
     # If we are not overwriting and the tar already exists and has a size

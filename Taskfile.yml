@@ -46,7 +46,6 @@ tasks:
       - task: build
       - task: push
       - task: push-manifests
-      - task: prepare-docs
 
   generate:
     desc: '[subtask] Generate Dockerfiles for the services.'

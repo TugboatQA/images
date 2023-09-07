@@ -18,7 +18,8 @@ jobs:
             grep -Eo '^services/[^/]+' | \
             sed -e 's@^services/@@g' | \
             sort | \
-            uniq)
+            uniq | \
+            tr '\n' ' ')
           echo "services=\"$changedservices\"" >> $GITHUB_OUTPUT
   trigger-build:
     needs: detect-services

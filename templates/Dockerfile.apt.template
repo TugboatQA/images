@@ -14,7 +14,6 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90tugboat && \
     \
     mkdir -p /usr/share/man/man1 && \
     mkdir -p /etc/service && \
-    mkdir -p /usr/share/tugboat && \
     \
     apt-get install -y \
         git locales sudo openssh-client ca-certificates tar gzip build-essential \
@@ -38,9 +37,6 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90tugboat && \
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
-
-COPY share/README.txt /usr/share/tugboat/
-COPY share/Makefile /usr/share/tugboat/
 
 {{DOCKERFILE}}
 

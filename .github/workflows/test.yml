@@ -19,7 +19,7 @@ jobs:
             sed -e 's@^services/@@g' | \
             sort | \
             uniq | \
-            tr '\n' ' ')
+            xargs echo )
           echo "services=\"$changedservices\"" >> $GITHUB_OUTPUT
   trigger-build:
     needs: detect-services
@@ -29,11 +29,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo $services
-#          curl --location \
-#            --request POST \
-#            --header "Accept: application/vnd.github+json" \
-#            --header "Authorization: Bearer ${GITHUB_TOKEN}" \
-#            --header "X-GitHub-Api-Version: 2022-11-28" \
-#            --data '{"ref":"main"}' \
-#            --url https://api.github.com/repos/TugboatQA/images/actions/workflows/build.yml/dispatches
+          json=$(printf '{"ref":"%s", "inputs":{"push":false,"services":"%s"}}' "$GITHUB_REF_NAME" "$services")
+          curl --location \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            --data "$json" \
+            --url https://api.github.com/repos/TugboatQA/images/actions/workflows/build.yml/dispatches

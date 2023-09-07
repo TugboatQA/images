@@ -30,6 +30,7 @@ jobs:
     steps:
       - run: |
           json=$(printf '{"ref":"%s", "inputs":{"push":false,"services":"%s"}}' "$GITHUB_REF_NAME" "$services")
+          echo "$json"
           curl --location \
             --request POST \
             --header "Accept: application/vnd.github+json" \

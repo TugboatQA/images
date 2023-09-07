@@ -56,6 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
+      fail-fast: false
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
@@ -88,12 +89,12 @@ jobs:
         uses: crazy-max/ghaction-github-runtime@v2
       - run: task -- ${{ matrix.service }}
         id: task
-        continue-on-error: true
   docs:
     name: Generate docs
     needs: build
     runs-on: ubuntu-latest
-    if: always() && contains(needs.*.result, 'success') && (inputs.push || github.event_name == 'schedule' || github.event_name == 'push')
+    # If the push portion of this logic changes, change env.PUSH logic as well.
+    if: always() && (inputs.push || github.event_name == 'schedule' || github.event_name == 'push')
     steps:
       - name: Install dependencies
         run: sudo apt-get update

@@ -29,9 +29,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          json=$(printf '{"ref":"%s", "inputs":{"push":false,"services":"%s"}}' "$GITHUB_REF_NAME" "$services")
+          json=$(printf '{"ref":"%s", "inputs":{"push":false,"services":"%s"}}' "$GITHUB_HEAD_REF" "$services")
           echo "$json"
-          curl --location \
+          curl --fail-with-body \
+            --location \
             --request POST \
             --header "Accept: application/vnd.github+json" \
             --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \

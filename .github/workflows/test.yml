@@ -20,7 +20,7 @@ jobs:
             sort | \
             uniq | \
             xargs echo )
-          echo "services=\"$changedservices\"" >> $GITHUB_OUTPUT
+          echo "services=$changedservices" >> $GITHUB_OUTPUT
   trigger-build:
     needs: detect-services
     if: needs.detect-services.outputs.services
@@ -30,7 +30,6 @@ jobs:
     steps:
       - run: |
           json=$(printf '{"ref":"%s", "inputs":{"push":false,"services":"%s"}}' "$GITHUB_HEAD_REF" "$services")
-          echo "$json"
           curl --fail-with-body \
             --location \
             --request POST \

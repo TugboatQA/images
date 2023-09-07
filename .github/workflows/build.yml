@@ -45,6 +45,7 @@ jobs:
             xargs echo )
           echo "services=$changedservices" >> $GITHUB_OUTPUT
   matrix:
+    name: Create service matrix
     needs: detect-pr-services
     runs-on: ubuntu-latest
     if: always() && github.event_name != 'pull_request' || needs.detect-pr-services.outputs.services
@@ -55,7 +56,7 @@ jobs:
       - id: set-matrix
         run: scripts/gha-matrix.sh ${{ inputs.services || needs.detect-pr-services.outputs.services }} >> $GITHUB_OUTPUT
   build:
-    name: Build services
+    name: Build service
     needs: matrix
     runs-on: ubuntu-latest
     strategy:
@@ -94,7 +95,7 @@ jobs:
         id: task
         continue-on-error: true
   docs:
-    name: Generate docs and push to TugboatQA/Dockerfiles
+    name: Generate docs
     needs: build
     runs-on: ubuntu-latest
     if: always() && contains(needs.*.result, 'success') && (inputs.push || github.event_name == 'schedule' || github.event_name == 'push')

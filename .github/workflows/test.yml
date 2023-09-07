@@ -33,7 +33,7 @@ jobs:
           curl --location \
             --request POST \
             --header "Accept: application/vnd.github+json" \
-            --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+            --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             --header "X-GitHub-Api-Version: 2022-11-28" \
             --data "$json" \
             --url https://api.github.com/repos/TugboatQA/images/actions/workflows/build.yml/dispatches

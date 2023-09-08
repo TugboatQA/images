@@ -20,8 +20,11 @@ for dockerfile in images/*/*/Dockerfile; do
     cache_block=
 
     if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
-        cache="type=gha,scope=$GITHUB_REF_NAME-$key,mode=max"
-        cache_block=$(printf ',"cache-from": ["%s"],"cache-to": ["%s"]' "$cache" "$cache" )
+        cache="type=gha,scope=$key,mode=min"
+        cache_block=$(printf ',"cache-from": ["%s"]' "$cache" )
+        if [[ "$GITHUB_REF_NAME" = "main" ]]; then
+            cache_block=${cache_block}$(printf ',"cache-to": ["%s"]' "$cache" )
+        fi
     fi
 
     # If we are not overwriting and the tar already exists and has a size

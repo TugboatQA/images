@@ -8,6 +8,7 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90tugboat && \
     echo 'DPkg::Options "--force-confnew";' >> /etc/apt/apt.conf.d/90tugboat && \
     (grep Linux\ 7 /etc/issue && echo "deb http://http.debian.net/debian wheezy-backports main" > /etc/apt/sources.list.d/wheezy-backports.list || /bin/true) && \
     (apt-get update || /bin/true) && \
+    apt-get install eatmydata && ln -sf /usr/bin/eatmydata /usr/local/bin/apt-get && \
     \
     apt-get install apt-transport-https && \
     apt-get update && \

@@ -76,7 +76,6 @@ for tags in $($GETTAGS "${FILTER}"); do
             dockerfile="${dir}/Dockerfile"
         fi
 
-        cp -r "${dir}/../../share" "${imgdir}/"
         if [ -e "${dir}/files" ]; then
             cp -r "${dir}/files" "${imgdir}/"
         fi

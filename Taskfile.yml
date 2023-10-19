@@ -137,6 +137,19 @@ tasks:
     cmds:
       - 'parallel --jobs {{.PARALLEL_JOBS}} --retries 2 --tag scripts/build.sh ::: $(echo "{{.TARBALLS}}")'
 
+  test:
+    desc: 'Test all images and tags of a single service.'
+    vars:
+      SERVICE: '{{.CLI_ARGS}}'
+    preconditions:
+      - sh: test -n "{{.CLI_ARGS}}"
+        msg: Specify the service to test after a double dash, e.g. 'task test -- example'.
+      - sh: echo "{{.CLI_ARGS}}" | grep -vq '\s'
+        msg: You may only test one service at a time.
+      - sh: ! test -d services/{{.CLI_ARGS}}
+        msg: The directory services/{{.CLI_ARGS}} does not exist.
+    cmd: scripts/test.sh {{.SERVICE}}
+
   push:
     desc: '[subtask] Push all images to docker.io. Be sure PUSH is set to true in your .env.local.'
     preconditions:

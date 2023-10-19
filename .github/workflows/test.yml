@@ -1,0 +1,82 @@
+name: test
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+    inputs:
+      services:
+        description: Space delimited string of services to test. If empty, all will be built.
+        type: string
+  schedule:
+    - cron: '0 0 * * 1'
+
+env:
+  TASK_VERSION: v3.29.1
+  TASK_CHECKSUM: e411770abf73d5e094100ab7a1c8278f35b591ecadbfd778200b6b2ad1ee340b
+  # If this changes, also update the if on the docs job. We unfortunately can't
+  # use env.PUSH in the if there.
+  PUSH: false
+
+jobs:
+  detect-pr-services:
+    name: Detect PR services
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.detect-services.outputs.services }}
+    steps:
+      - uses: actions/checkout@v3
+        if: github.event_name == 'pull_request'
+      - id: detect-services
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin main
+          echo "services=$(.github/workflows/detect-pr-services.sh)" >> $GITHUB_OUTPUT
+  matrix:
+    name: Create service matrix
+    needs: detect-pr-services
+    runs-on: ubuntu-latest
+    if: always() && github.event_name != 'pull_request' || needs.detect-pr-services.outputs.services
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: set-matrix
+        run: .github/workflows/gha-matrix.sh ${{ inputs.services || needs.detect-pr-services.outputs.services }} >> $GITHUB_OUTPUT
+  test:
+    name: Test service
+    needs: matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get update
+          && sudo apt-get install -y eatmydata
+          && sudo ln -snf /usr/bin/eatmydata /usr/local/bin/apt-get
+          && sudo apt-get install -y parallel jq curl
+          && curl -L -o /tmp/task_linux_amd64.deb https://github.com/go-task/task/releases/download/${{ env.TASK_VERSION }}/task_linux_amd64.deb
+          && sha256sum /tmp/task_linux_amd64.deb | grep -q ${{ env.TASK_CHECKSUM }}
+          && sudo dpkg -i /tmp/task_linux_amd64.deb
+          && sudo apt-get clean
+          && sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+      -
+        # Add support for more platforms with QEMU (optional)
+        # https://github.com/docker/setup-qemu-action
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        # Expose the actions cache url and token.
+        # https://github.com/tonistiigi/go-actions-cache/blob/master/api.md#authentication
+        name: Expose GitHub Runtime
+        uses: crazy-max/ghaction-github-runtime@v2
+      - run: task -- ${{ matrix.service }}
+        id: task
+      - name: Test healthcheck
+        run: task test -- ${{ matrix.service }}
+

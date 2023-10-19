@@ -1,8 +1,6 @@
 name: build
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
   push:
     branches:
       - main
@@ -26,30 +24,15 @@ env:
   PUSH: ${{ (inputs.push || github.event_name == 'schedule' || github.event_name == 'push') && 'true' || 'false' }}
 
 jobs:
-  detect-pr-services:
-    name: Detect PR services
-    runs-on: ubuntu-latest
-    outputs:
-      services: ${{ steps.detect-services.outputs.services }}
-    steps:
-      - uses: actions/checkout@v3
-        if: github.event_name == 'pull_request'
-      - id: detect-services
-        if: github.event_name == 'pull_request'
-        run: |
-          git fetch origin main
-          echo "services=$(.github/workflows/detect-pr-services.sh)" >> $GITHUB_OUTPUT
   matrix:
     name: Create service matrix
-    needs: detect-pr-services
     runs-on: ubuntu-latest
-    if: always() && github.event_name != 'pull_request' || needs.detect-pr-services.outputs.services
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v3
       - id: set-matrix
-        run: .github/workflows/gha-matrix.sh ${{ inputs.services || needs.detect-pr-services.outputs.services }} >> $GITHUB_OUTPUT
+        run: .github/workflows/gha-matrix.sh ${{ inputs.services }} >> $GITHUB_OUTPUT
   build:
     name: Build service
     needs: matrix

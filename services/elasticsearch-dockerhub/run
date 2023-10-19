@@ -1,2 +1,10 @@
 #!/bin/sh
-exec /docker-entrypoint.sh elasticsearch
+
+# Pass all environment variables. We can't use --preserve-environment with
+# --login.
+env=$(env | awk -F= '{print $1}' | tr '\n' ',' | sed -e 's/,$/\n/')
+
+exec /bin/su \
+  --whitelist-environment "$env" \
+  --command '/usr/local/bin/docker-entrypoint.sh' \
+  --login elasticsearch

@@ -14,8 +14,6 @@ on:
 env:
   TASK_VERSION: v3.29.1
   TASK_CHECKSUM: e411770abf73d5e094100ab7a1c8278f35b591ecadbfd778200b6b2ad1ee340b
-  # If this changes, also update the if on the docs job. We unfortunately can't
-  # use env.PUSH in the if there.
   PUSH: false
 
 jobs:

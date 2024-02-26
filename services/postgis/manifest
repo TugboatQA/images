@@ -1,0 +1,9 @@
+function getTags() {
+  ((newer_than=365*12*60*60))
+  curl -Ls https://registry.hub.docker.com/v2/repositories/postgis/postgis/tags?page_size=1024 |
+    jq -r '[.results[] | select((.images | length) > 0 and (.last_updated | sub("\\.[0-9]+Z"; "Z") | fromdate) > (now - '"$newer_than"')) | {name: .name, digest: .images[0].digest}] | group_by(.digest) | map([.[].name] | join(",")) | .[]' |
+    grep -v -e beta -e rc -e alpine |
+    grep -e 13-3
+}
+NAME="tugboat-postgis"
+FROM="postgis/postgis"

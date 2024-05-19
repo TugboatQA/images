@@ -14,12 +14,14 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90tugboat && \
     apt-get update && \
     \
     mkdir -p /usr/share/man/man1 && \
-    mkdir -p /etc/service && \
     \
     apt-get install -y \
         git locales sudo openssh-client ca-certificates tar gzip build-essential \
         net-tools netcat-openbsd unzip zip bzip2 gnupg curl wget vim runit \
         rsync apt-transport-https && \
+    \
+    mkdir -p /etc/service && \
+    \
     (apt-get install -y ssmtp || apt-get install -y msmtp-mta) && \
     (grep Linux\ 7 /etc/issue && apt-get -t wheezy-backports install -y git || /bin/true) && \
     \

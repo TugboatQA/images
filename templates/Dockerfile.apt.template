@@ -18,7 +18,7 @@ RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90tugboat && \
     apt-get install -y \
         git locales sudo openssh-client ca-certificates tar gzip build-essential \
         net-tools netcat-openbsd unzip zip bzip2 gnupg curl wget vim runit \
-        rsync apt-transport-https && \
+        rsync apt-transport-https jq && \
     \
     mkdir -p /etc/service && \
     \

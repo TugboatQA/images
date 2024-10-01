@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/opt/solr/bin/solr stop -p ${SOLR_PORT:-8983}

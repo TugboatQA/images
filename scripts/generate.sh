@@ -69,6 +69,11 @@ for tags in $($GETTAGS "${FILTER}"); do
             cp "${dir}/run" "${imgdir}/run"
             chmod 755 "${imgdir}/run"
             RUN="RUN mkdir -p /etc/service/${SERVICE}\nCOPY run /etc/service/${SERVICE}/run"
+            if [ -e "${dir}/finish" ]; then
+                cp "${dir}/finish" "${imgdir}/finish"
+                chmod 755 "${imgdir}/finish"
+                RUN="${RUN}\nCOPY finish /etc/service/${SERVICE}/finish"
+            fi
         fi
 
         dockerfile=/dev/null

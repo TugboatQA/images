@@ -85,6 +85,7 @@ for tags in $($GETTAGS "${FILTER}"); do
             cp -r "${dir}/files" "${imgdir}/"
         fi
 
+        # shellcheck disable=SC2002
         cat "templates/Dockerfile.${TEMPLATE}.template" | \
             sed "s|{{FROM}}|${image}|g" | \
             sed "/{{DOCKERFILE}}/ r ${dockerfile}" | \

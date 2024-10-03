@@ -52,10 +52,15 @@ healthcheck() {
 }
 
 for x in "$servicedir"/*/NAME; do
-    tag=$(basename "$(dirname "$x")")
+    dirname=$(dirname "$x")
+    tag=$(basename "$dirname")
     image=$NAMESPACE/$NAME:$tag
-    container=$(docker create "$image")
-    trap - EXIT
+    if [[ $(docker inspect "$image" --format '{{.Config.Healthcheck}}') = "<nil>" ]]; then
+        echo "$image SKIPPED"
+        continue
+    fi
+    platform=$(cat "$dirname/PLATFORM")
+    container=$(docker create --platform "$platform" "$image")
     trap 'docker rm -f "$container" >/dev/null' EXIT
     docker start "$container" >/dev/null
     if ! healthcheck "$container"; then
@@ -65,4 +70,5 @@ for x in "$servicedir"/*/NAME; do
         echo "$image PASSED"
     fi
     docker rm -f "$container" >/dev/null
+    trap - EXIT
 done

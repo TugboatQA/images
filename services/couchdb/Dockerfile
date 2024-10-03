@@ -1,1 +1,3 @@
+ENV COUCHDB_USER=tugboat \
+    COUCHDB_PASSWORD=tugboat
 HEALTHCHECK CMD /bin/nc -z 127.0.0.1 5984

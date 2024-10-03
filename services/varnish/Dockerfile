@@ -1,1 +1,1 @@
-HEALTHCHECK CMD /usr/bin/varnishadm status
+HEALTHCHECK CMD /usr/bin/varnishadm status || /usr/local/bin/varnishadm status

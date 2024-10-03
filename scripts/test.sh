@@ -60,15 +60,15 @@ for x in "$servicedir"/*/NAME; do
         continue
     fi
     platform=$(cat "$dirname/PLATFORM")
-    container=$(docker create --platform "$platform" "$image")
-    trap 'docker rm -f "$container" >/dev/null' EXIT
-    docker start "$container" >/dev/null
+    container=$(docker run --rm --detach --platform "$platform" "$image")
     if ! healthcheck "$container"; then
+        echo
+        docker logs --follow -n 5 "$container" &
+        docker stop "$container" >/dev/null
         echo "$image FAILED"
         exit 1
     else
+        docker stop "$container" >/dev/null
         echo "$image PASSED"
     fi
-    docker rm -f "$container" >/dev/null
-    trap - EXIT
 done

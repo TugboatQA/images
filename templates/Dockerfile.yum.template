@@ -46,4 +46,8 @@ RUN yum clean all -y && \
 
 STOPSIGNAL SIGTERM
 
-CMD ["/usr/local/bin/runsvdir", "-P", "/etc/service"]
+ENV RUNITDIR=/usr/local/bin
+
+COPY runit-init.sh /runit-init.sh
+
+CMD ["/runit-init.sh"]

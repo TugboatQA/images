@@ -64,6 +64,11 @@ for tags in $($GETTAGS "${FILTER}"); do
         image="${FROM}:${tag}"
         mkdir -p "${imgdir}"
 
+        # Add the runit-init.sh if needed.
+        if [[ "$TEMPLATE" != "none" ]]; then
+            cp dist/runit-init.sh "${imgdir}"
+        fi
+
         RUN=""
         if [ -e "${dir}/run" ]; then
             cp "${dir}/run" "${imgdir}/run"

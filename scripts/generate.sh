@@ -26,7 +26,7 @@ function getTags() {
             perl -pe 's/;SharedTags:/,/g;' -e 's/;/\n/g' |
             sort |
             sed 's/^.*Tags: //g' |
-            grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver -e alpha -e beta |
+            grep -v -e alpine -e slim -e onbuild -e windows -e wheezy -e nanoserver -e alpha -e beta -e 'ubi[0-9]' |
             ${filter} |
             sed 's/, /,/g'
     done
@@ -90,6 +90,7 @@ for tags in $($GETTAGS "${FILTER}"); do
             cp -r "${dir}/files" "${imgdir}/"
         fi
 
+        # shellcheck disable=SC2002
         cat "templates/Dockerfile.${TEMPLATE}.template" | \
             sed "s|{{FROM}}|${image}|g" | \
             sed "/{{DOCKERFILE}}/ r ${dockerfile}" | \

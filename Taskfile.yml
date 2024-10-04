@@ -92,7 +92,7 @@ tasks:
       - buildkitd.toml
     status:
       # Exits zero (up to date) if there is already a builder.
-      - docker buildx ls | grep -q '^{{.BUILDX_BUILDER}}\s'
+      - docker buildx ls | grep -q '^{{.BUILDX_BUILDER}}'
     cmds:
       - docker buildx create
           --name "{{.BUILDX_BUILDER}}"

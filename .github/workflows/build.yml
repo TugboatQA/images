@@ -41,6 +41,12 @@ jobs:
       matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
       fail-fast: false
     steps:
+      # v1.3.1
+      - uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        # Some of our services need a lot of free disk. We run this action to
+        # free up some disk space, however it is slow, so we conditionally do
+        # this only on those services that need it.
+        if: matrix.service == 'opensearch' || matrix.service == 'dynamodb'
       - uses: actions/checkout@v3
       - name: Install dependencies
         run: sudo apt-get update

@@ -2,7 +2,7 @@
 
 sv_stop() {
     for s in /etc/service/*; do
-        "$RUNITDIR"/sv stop "$s"
+        "$RUNITDIR"sv stop "$s"
     done
 }
 
@@ -12,5 +12,5 @@ trap "" SIGCHLD
 
 trap "sv_stop; exit" SIGTERM
 
-SVWAIT=60 "$RUNITDIR"/runsvdir -P /etc/service &
+SVWAIT=60 "$RUNITDIR"runsvdir -P /etc/service &
 wait

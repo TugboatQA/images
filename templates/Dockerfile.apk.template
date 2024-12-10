@@ -14,4 +14,10 @@ ENV RUNITDIR=/sbin
 
 COPY runit-init.sh /runit-init.sh
 
+# Alpine 3.21.* installs runit into a different directory. Test if this is 3.21
+# and then modify the above script appropriately.
+RUN source /etc/os-release && \
+    test "${VERSION_ID#3.21.}" = "$VERSION_ID" || \
+    sed -e 's@$RUNITDIR@/usr&@g' -i /runit-init.sh
+
 CMD ["/runit-init.sh"]

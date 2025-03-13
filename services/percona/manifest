@@ -1,5 +1,5 @@
 NAME=percona
 FROM=percona
-TEMPLATE=yum
+TEMPLATE=none
 # Filter out centos 5.6 and percona with mongodb.
 FILTER="grep -v -e 5.6-centos -e psmdb"

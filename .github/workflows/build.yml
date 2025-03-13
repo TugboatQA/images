@@ -46,7 +46,7 @@ jobs:
         # Some of our services need a lot of free disk. We run this action to
         # free up some disk space, however it is slow, so we conditionally do
         # this only on those services that need it.
-        if: matrix.service == 'opensearch' || matrix.service == 'dynamodb'
+        if: matrix.service == 'opensearch' || matrix.service == 'dynamodb' || matrix.service == 'postgis'
       - uses: actions/checkout@v3
       - name: Install dependencies
         run: sudo apt-get update

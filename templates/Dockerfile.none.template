@@ -1,1 +1,5 @@
+FROM {{FROM}}
+
+USER root
+
 {{DOCKERFILE}}

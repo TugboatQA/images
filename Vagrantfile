@@ -9,7 +9,7 @@ require 'yaml'
 
 dir = File.dirname(File.expand_path(__FILE__))
 settings = YAML::load_file("#{dir}/Vagrant.yml")
-if File.exists?("#{dir}/Vagrant.local.yml")
+if File.exist?("#{dir}/Vagrant.local.yml")
     local = YAML::load_file("#{dir}/Vagrant.local.yml")
     settings["vb"].merge!(local["vb"])
 end
@@ -26,7 +26,12 @@ apt-get install -yq \
     curl \
     git \
     jq \
+    parallel \
+    pipx \
     software-properties-common
+
+pipx install go-task-bin
+ln -snf /root/.local/bin/task /usr/local/bin/task
 SCRIPT
 
 $docker = <<SCRIPT
@@ -69,6 +74,9 @@ Vagrant.configure(2) do |config|
 
     config.vm.provision "shell", inline: $packages
     config.vm.provision "shell", inline: $docker
+
+    ## Synced folders
+    config.vm.synced_folder ".", "/vagrant", type: settings["vb"]["sync"]
 
     # Add defined SSH public key to vagrant user's authorized_keys
     if settings["vb"]["sshkey"]

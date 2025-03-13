@@ -2,7 +2,7 @@ vb:
 
   ## Which vagrant box to use. A Debian-based image is assumed by the
   ## provisioning scripts.
-  box: debian/contrib-buster64
+  box: generic/debian12
 
   ## Which type of network to use to access the VMs. Use "public_network" if
   ## you want bridged interfaces to your local network.
@@ -23,7 +23,7 @@ vb:
   ## Providers' file sharing method. Other valid values include nfs, smb, or
   ## rsync. See http://docs.vagrantup.com/v2/synced-folders/index.html for more
   ## information.
-  sync: ''
+  sync: virtualbox
 
   ## If defined, this public key is added to the vagrant user's authorized_keys
   ## file automatically.

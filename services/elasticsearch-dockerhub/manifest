@@ -1,3 +1,5 @@
 NAME=elasticsearch
 FROM=elasticsearch
 SERVICE=elasticsearch
+# Version 9.x is RHEL ubi9-minimal, lower versions are Ubuntu.
+FILTER="grep -v -e 9\."

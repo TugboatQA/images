@@ -1,2 +1,6 @@
 #!/bin/sh
+set -e
+# Redis 8.x's docker-entrypoint expects to be in the data dir to fix
+# permissions.
+cd /data
 exec docker-entrypoint.sh redis-server

@@ -16,7 +16,8 @@ service
 │   ├── file1
 │   └── file2
 ├── manifest
-└── run
+├── run
+└── test
 ```
 
 ### Adding a new service
@@ -55,6 +56,12 @@ defined in this file.
 This is the primary `runit` script used to start the service that the image is
 created for.
 
+### test
+
+This is an executable script that can be used to augment tests for an individual
+service. It is not shipped with the image itself. To run tests on a service,
+call `task test -- [servicename]`.
+
 ## Building images locally
 
 If you would like to build images locally, there are a few things to know before
@@ -81,5 +88,6 @@ override values in the `.env`, you may do so in a `.env.local`.
 - `task`: build all images.
 - `PUSH=1 task`: builds and push all images. (You may also set `PUSH=1` in your .env.local.)
 - `task -- chicken duck`: builds just the `chicken` and `duck` service, if there were such things.
+- `task test -- chicken duck`: tests the `chicken` and `duck` services.
 - `task clean`: to clean the files on disk (without losing your local cache in the docker builder.)
 - `task clean-all`: to remove all files on disk and the docker builder.

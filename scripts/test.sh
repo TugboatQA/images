@@ -77,6 +77,7 @@ for x in "$servicedir"/*/NAME; do
     platform=$(cat "$dirname/PLATFORM")
     container=$(docker run --rm --detach --platform "$platform" "$image")
     # If the script is interrupted, clean up this container.
+    # shellcheck disable=SC2064
     trap "cleanup_container $container" EXIT INT TERM
     if ! healthcheck "$container"; then
         echo

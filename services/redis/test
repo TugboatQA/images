@@ -1,0 +1,7 @@
+#!/bin/bash
+set -euo pipefail
+
+# Ensure redis can be stopped using runit; otherwise this could indicate an
+# issue with file permissions, blocking redis from writing data to disk.
+sv restart redis
+echo "PASS: Redis Restart"

@@ -31,6 +31,11 @@ healthcheck() {
     printf 'Starting %s\n' "$image"
     printf 'Waiting for container %s to be healthy\n' "$container"
     while :; do
+        if ! docker ps --all --quiet --no-trunc --filter "id=$container" | grep -q "$container"; then
+            printf '\n'
+            echo "No container $container" >&2
+            return 1
+        fi
         healthy=$(docker ps --filter "id=$container" --filter health=healthy --format '{{.Status}}')
         if [[ -n "$healthy" ]]; then
             printf '\n'
@@ -47,8 +52,18 @@ healthcheck() {
             printf '\n'
             return 1
         fi
-        printf '.'
+        printf '.' >&2
     done
+}
+
+# Cleanup function to stop the specified container
+cleanup_container() {
+    local container_id="$1"
+    if [[ -n "$container_id" ]]; then
+        echo "Stopping container: $container_id"
+        docker stop "$container_id" >/dev/null 2>&1 || true
+    fi
+    trap - EXIT INT TERM
 }
 
 for x in "$servicedir"/*/NAME; do
@@ -61,14 +76,27 @@ for x in "$servicedir"/*/NAME; do
     fi
     platform=$(cat "$dirname/PLATFORM")
     container=$(docker run --rm --detach --platform "$platform" "$image")
+    # If the script is interrupted, clean up this container.
+    # shellcheck disable=SC2064
+    trap "cleanup_container $container" EXIT INT TERM
     if ! healthcheck "$container"; then
         echo
         docker logs --follow -n 5 "$container" &
         docker stop "$container" >/dev/null
-        echo "$image FAILED"
+        echo "❌ $image FAILED"
         exit 1
-    else
-        docker stop "$container" >/dev/null
-        echo "$image PASSED"
     fi
+    if [[ -x "$dir/test" ]]; then
+        echo "Executing additional tests on $image:"
+        docker cp --quiet "$dir/test" "$container:/test"
+        if ! docker exec "$container" /test 2>&1 | sed 's/^/├── /'; then
+            echo
+            docker stop "$container" >/dev/null
+            echo "└── ❌ $image additional test FAILED"
+            exit 1
+        fi
+        echo "└── ✅ $image additional test PASSED"
+    fi
+    docker stop "$container" >/dev/null
+    echo "✅ $image PASSED"
 done

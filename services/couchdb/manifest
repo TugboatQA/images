@@ -1,1 +1,1 @@
-FILTER="grep -v -e couchperuser"
+FILTER="grep -v -e couchperuser -e nouveau"

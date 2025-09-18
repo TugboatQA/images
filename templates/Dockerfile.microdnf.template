@@ -2,20 +2,19 @@ FROM {{FROM}}
 
 USER root
 
-RUN dnf install -y git sudo openssh-clients ca-certificates net-tools bzip2 \
+RUN microdnf install -y dnf && \
+    microdnf clean all && \
+    dnf install 'dnf-command(config-manager)' && \
+    dnf install -y git sudo openssh-clients ca-certificates net-tools bzip2 \
       vim-enhanced nmap-ncat make gcc gcc-c++ rsync wget tar jq && \
     \
     ( dnf install -y glibc-static || \
-      dnf --enablerepo=powertools install -y glibc-static || \
       ( \
-        dnf config-manager --set-enabled powertools && \
-        dnf install -y glibc-static \
-      ) || \
-      ( \
-        dnf config-manager --set-enabled $(dnf repolist all | grep -Ei 'codeready|crb|powertools' | awk '{print $1}' | head -n1) && \
-        dnf install -y glibc-static \
+        dnf config-manager --set-enabled ol9_baseos_latest ol9_appstream \
+          ol9_codeready_builder && dnf install -y glibc-static \
       ) \
     ) && \
+    dnf clean all && \
     \
     echo "[user]" > ~/.gitconfig && \
     echo "    email = root@tugboat.qa" >> ~/.gitconfig && \

@@ -2,19 +2,12 @@ FROM {{FROM}}
 
 USER root
 
-RUN microdnf install -y dnf && \
-    microdnf clean all && \
-    dnf install 'dnf-command(config-manager)' && \
-    dnf install -y git sudo openssh-clients ca-certificates net-tools bzip2 \
-      vim-enhanced nmap-ncat make gcc gcc-c++ rsync wget tar jq && \
+RUN microdnf install -y git sudo openssh-clients ca-certificates net-tools \
+      bzip2 vim-enhanced nmap-ncat make gcc gcc-c++ rsync wget tar jq && \
     \
-    ( dnf install -y glibc-static || \
-      ( \
-        dnf config-manager --set-enabled ol9_baseos_latest ol9_appstream \
-          ol9_codeready_builder && dnf install -y glibc-static \
-      ) \
+    ( microdnf install -y glibc-static || \
+      microdnf --enablerepo=ol9_codeready_builder install glibc-static \
     ) && \
-    dnf clean all && \
     \
     echo "[user]" > ~/.gitconfig && \
     echo "    email = root@tugboat.qa" >> ~/.gitconfig && \
@@ -38,7 +31,7 @@ ENV LANG=en_US.UTF-8 \
 
 {{DOCKERFILE}}
 
-RUN dnf clean all -y && \
+RUN microdnf clean all && \
     rm -rf /tmp/* /var/tmp/*
 
 {{RUN}}

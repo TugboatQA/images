@@ -30,4 +30,8 @@ COPY files/tugboat.ini /usr/local/etc/php/conf.d/tugboat.ini
 COPY files/nginx.conf /etc/nginx/nginx.conf
 COPY files/sites-enabled/* /etc/nginx/sites-enabled/
 
+# Copy files in place to assist with MySQL client SSL issues.
+COPY files/drush.yml /etc/drush/drush.yml
+COPY files/my.cnf /etc/my.cnf
+
 HEALTHCHECK CMD /bin/nc -z 127.0.0.1 80

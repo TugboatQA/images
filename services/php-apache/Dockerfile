@@ -30,4 +30,8 @@ COPY files/apache.runit /etc/service/apache/run
 COPY files/000-default.conf /etc/apache2/sites-available/000-default.conf
 COPY files/tugboat.ini /usr/local/etc/php/conf.d/tugboat.ini
 
+# Copy files in place to assist with MySQL client SSL issues.
+COPY files/drush.yml /etc/drush/drush.yml
+COPY files/my.cnf /etc/my.cnf
+
 HEALTHCHECK CMD /bin/nc -z 127.0.0.1 80

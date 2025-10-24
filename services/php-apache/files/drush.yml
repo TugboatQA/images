@@ -1,0 +1,20 @@
+command:
+  sql:
+    cli:
+      options:
+        extra: "--skip-ssl"
+    connect:
+      options:
+        extra: "--skip-ssl"
+    create:
+      options:
+        extra: "--skip-ssl"
+    drop:
+      options:
+        extra: "--skip-ssl"
+    dump:
+      options:
+        extra: "--skip-ssl"
+    query:
+      options:
+        extra: "--skip-ssl"

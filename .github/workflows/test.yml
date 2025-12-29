@@ -81,6 +81,10 @@ jobs:
         uses: crazy-max/ghaction-github-runtime@v2
       - run: task -- ${{ matrix.service }}
         id: task
+        env:
+          # Modify the temp dir for Gnu Parallel to use the runner's temp dir.
+          # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#runner-context
+          TMPDIR: ${{ runner.temp }}
       - name: Test healthcheck
         run: task test -- ${{ matrix.service }}
 

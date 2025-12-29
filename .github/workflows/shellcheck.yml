@@ -12,4 +12,4 @@ jobs:
           SHELLCHECK_OPTS: --external-sources --exclude=SC1091
         with:
           severity: warning
-          additional_files: 'run finish'
+          additional_files: 'run finish test'

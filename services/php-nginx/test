@@ -1,0 +1,11 @@
+#!/bin/bash
+set -euo pipefail
+
+# Ensure redis can be stopped using runit; otherwise this could indicate an
+# issue with file permissions, blocking redis from writing data to disk.
+opcache_installed=$(php -r "echo extension_loaded('Zend OPcache') ? 'yes' : 'no';")
+if [[ "$opcache_installed" != "yes" ]]; then
+    echo "FAIL: OPcache not installed"
+    exit 1;
+fi
+echo "PASS: OPcache installed"

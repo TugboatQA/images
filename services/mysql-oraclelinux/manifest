@@ -1,4 +1,0 @@
-NAME=mysql
-FROM=mysql
-TEMPLATE=microdnf
-FILTER="grep -e oraclelinux"

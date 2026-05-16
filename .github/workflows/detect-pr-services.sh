@@ -6,4 +6,7 @@ git diff --name-only origin/main | \
     sed -e 's@^services/@@g' | \
     sort | \
     uniq | \
+    while read -r service; do
+        [[ -d "services/$service" ]] && echo "$service"
+    done | \
     xargs echo

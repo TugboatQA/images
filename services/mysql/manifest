@@ -1,1 +1,1 @@
-FILTER="grep -v -e oracle"
+TEMPLATE=microdnf

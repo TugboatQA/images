@@ -11,11 +11,14 @@ if [[ "$OVERWRITE_EXISTING" = "true" ]] || [[ "$OVERWRITE_EXISTING" = "1" ]]; th
     overwrite=true
 fi
 
-# Push straight to the registry when PUSH is enabled, otherwise load the images
-# into the local docker image store.
-output="type=docker"
+# Always load the images into the local docker image store so they can be
+# tested, and also push them to the registry when PUSH is enabled. The marker
+# file records which of those happened for each image; see the bake task.
+outputs='["type=docker"]'
+marker=loaded
 if [[ "$PUSH" = "true" ]] || [[ "$PUSH" = "1" ]]; then
-    output="type=registry"
+    outputs='["type=docker", "type=registry"]'
+    marker=pushed
 fi
 
 # Read from the GitHub Actions cache, and only write to it from main.
@@ -29,17 +32,21 @@ if [[ "$gha" = "true" ]] && [[ "${GITHUB_REF_NAME:-}" = "main" ]]; then
 fi
 
 # Print a tab-separated line of directory, name and tags for each image that
-# needs to be built, and turn those into bake targets.
+# needs to be built, and turn those into bake targets. A pushed image was also
+# loaded, so it does not need to be built again just to load it.
+shopt -s nullglob
 for dockerfile in images/*/*/Dockerfile; do
     dir=$(dirname "$dockerfile")
-    if [[ "$overwrite" = "false" ]] && [[ -f "$dir/built" ]]; then
-        echo "Skipping $dir; rm $dir/built or set OVERWRITE_EXISTING to true to overwrite this image" >&2
+    if [[ "$overwrite" = "false" ]] && { [[ -f "$dir/$marker" ]] || [[ -f "$dir/pushed" ]]; }; then
+        echo "Skipping $dir; rm $dir/$marker or set OVERWRITE_EXISTING to true to overwrite this image" >&2
         continue
     fi
-    printf '%s\t%s\t%s\n' "$dir" "$(cat "$dir/NAME")" "$(cat "$dir/TAGS")"
+    name=$(cat "$dir/NAME")
+    tags=$(cat "$dir/TAGS")
+    printf '%s\t%s\t%s\n' "$dir" "$name" "$tags"
 done | jq -nR \
     --arg namespace "$NAMESPACE" \
-    --arg output "$output" \
+    --argjson outputs "$outputs" \
     --argjson gha "$gha" \
     --argjson cache_to "$cache_to" \
     '[inputs | split("\t") | {dir: .[0], name: .[1], tags: (.[2] | split(" "))}
@@ -48,7 +55,7 @@ done | jq -nR \
       | {key: $key, value: ({
           context: .dir,
           dockerfile: "Dockerfile",
-          output: [$output],
+          output: $outputs,
           platforms: ["linux/amd64"],
           tags: (.name as $name | .tags | map("\($namespace)/\($name):\(.)")),
           pull: true

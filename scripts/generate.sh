@@ -57,6 +57,8 @@ for tags in $($GETTAGS "${FILTER}"); do
     imgdir="${servicedir}/${tag}"
     image="${FROM}:${tag}"
     mkdir -p "${imgdir}"
+    # The Dockerfile is being regenerated, so the image needs to be rebuilt.
+    rm -f "${imgdir}/loaded" "${imgdir}/pushed"
 
     # Add the runit-init.sh if needed.
     if [[ "$TEMPLATE" != "none" ]]; then

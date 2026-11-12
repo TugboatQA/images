@@ -110,7 +110,8 @@ jobs:
           --exclude .git
           --exclude LICENSE
           --exclude README.md
-          --exclude '*/built'
+          --exclude '*/loaded'
+          --exclude '*/pushed'
           images/images/ dockerfiles/
       - name: Configure SSH Agent
         uses: webfactory/ssh-agent@d4b9b8ff72958532804b70bbe600ad43b36d5f2e

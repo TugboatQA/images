@@ -31,9 +31,11 @@ Docker hub, and give the `write` team write permissions to it.
 ### Dockerfile
 
 This file contains any custom Dockerfile information required for this image.
-Images are copied from the base image, so things like EXPOSE or ENV values are
-not carried over. So, any of those values that need to be in the resulting image
-need to be duplicated here.
+It is inserted into the template for the image (see TEMPLATE below), which
+builds from the base image. Values like EXPOSE, ENV and WORKDIR are inherited
+from the base image, but its VOLUMEs and ENTRYPOINT are removed with
+`FROM --reset`. All templates except `none` also set USER, STOPSIGNAL and CMD
+so that runit starts the service.
 
 ### files
 

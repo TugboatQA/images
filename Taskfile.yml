@@ -80,7 +80,6 @@ tasks:
       - *require_jq
     cmds:
       - scripts/bakefile.sh
-      - defer: rm -f newbake.json
 
   create-builder:
     desc: '[subtask] Create the Docker buildx builder.'
@@ -188,6 +187,6 @@ tasks:
       - test -z "{{.IMAGES}}"
     vars:
       IMAGES:
-        sh: docker images ls --filter=reference="{{.NAMESPACE}}/*" -q | sort | uniq
+        sh: docker image ls --filter=reference="{{.NAMESPACE}}/*" -q | sort | uniq
     cmd: docker rmi --force $(echo "{{.IMAGES}}") || true
 

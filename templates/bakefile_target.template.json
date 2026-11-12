@@ -1,8 +1,0 @@
-{
-    "context": "$dir",
-    "dockerfile": "Dockerfile",
-    "output": ["$output"],
-    "platforms": ["linux/amd64"],
-    "tags": $tags,
-    "pull": true$cache_block
-}

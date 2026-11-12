@@ -17,8 +17,6 @@ on:
     - cron: '0 0 * * 6'
 
 env:
-  TASK_VERSION: v3.29.1
-  TASK_CHECKSUM: e411770abf73d5e094100ab7a1c8278f35b591ecadbfd778200b6b2ad1ee340b
   # If this changes, also update the if on the docs job. We unfortunately can't
   # use env.PUSH in the if there.
   PUSH: ${{ (inputs.push || github.event_name == 'schedule' || github.event_name == 'push') && 'true' || 'false' }}
@@ -41,42 +39,43 @@ jobs:
       matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
       fail-fast: false
     steps:
-      # v1.3.1
-      - uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
-        # Some of our services need a lot of free disk. We run this action to
-        # free up some disk space, however it is slow, so we conditionally do
-        # this only on those services that need it.
-        if: matrix.service == 'opensearch' || matrix.service == 'dynamodb' || matrix.service == 'postgis' || matrix.service == 'node'
       - uses: actions/checkout@v3
-      - name: Install dependencies
-        run: sudo apt-get update
-          && sudo apt-get install -y eatmydata
-          && sudo ln -snf /usr/bin/eatmydata /usr/local/bin/apt-get
-          && sudo apt-get install -y parallel jq curl
-          && curl -L -o /tmp/task_linux_amd64.deb https://github.com/go-task/task/releases/download/${{ env.TASK_VERSION }}/task_linux_amd64.deb
-          && sha256sum /tmp/task_linux_amd64.deb | grep -q ${{ env.TASK_CHECKSUM }}
-          && sudo dpkg -i /tmp/task_linux_amd64.deb
-          && sudo apt-get clean
-          && sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - uses: ./.github/actions/setup
+        with:
+          service: ${{ matrix.service }}
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      -
-        # Expose the actions cache url and token.
-        # https://github.com/tonistiigi/go-actions-cache/blob/master/api.md#authentication
-        name: Expose GitHub Runtime
-        uses: crazy-max/ghaction-github-runtime@v2
-      - run: task -- ${{ matrix.service }}
-        id: task
+      - name: Build
+        run: task -- ${{ matrix.service }}
         env:
+          # Load the images into docker without pushing them, so they can be
+          # tested first.
+          PUSH: false
           # Modify the temp dir for Gnu Parallel to use the runner's temp dir.
           # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#runner-context
           TMPDIR: ${{ runner.temp }}
+      - name: Test healthcheck
+        run: task test -- ${{ matrix.service }}
+      - name: Push
+        if: env.PUSH == 'true'
+        run: task push -- ${{ matrix.service }}
+      # Record which images directories were pushed, so the docs job only
+      # publishes docs for those.
+      - name: Record pushed images
+        if: env.PUSH == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/pushed"
+          for dir in images/*/; do
+            touch "$RUNNER_TEMP/pushed/$(basename "$dir")"
+          done
+      - uses: actions/upload-artifact@v4
+        if: env.PUSH == 'true'
+        with:
+          name: pushed-${{ matrix.service }}
+          path: ${{ runner.temp }}/pushed
   docs:
     name: Generate docs
     needs: build
@@ -84,18 +83,11 @@ jobs:
     # If the push portion of this logic changes, change env.PUSH logic as well.
     if: always() && (inputs.push || github.event_name == 'schedule' || github.event_name == 'push')
     steps:
-      - name: Install dependencies
-        run: sudo apt-get update
-          && sudo apt-get install -y curl rsync
-          && curl -L -o /tmp/task_linux_amd64.deb https://github.com/go-task/task/releases/download/${{ env.TASK_VERSION }}/task_linux_amd64.deb
-          && sha256sum /tmp/task_linux_amd64.deb | grep -q ${{ env.TASK_CHECKSUM }}
-          && sudo dpkg -i /tmp/task_linux_amd64.deb
-          && sudo apt-get clean
-          && sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
       - name: Checkout TugboatQA/images
         uses: actions/checkout@v3
         with:
           path: images
+      - uses: ./images/.github/actions/setup
       - name: Checkout TugboatQA/dockerfiles
         uses: actions/checkout@v3
         with:
@@ -104,15 +96,35 @@ jobs:
       - name: Generate docs
         working-directory: images
         run: task generate && task prepare-docs
+      - uses: actions/download-artifact@v4
+        # With no pushed images there is nothing to download, and nothing to
+        # update below.
+        continue-on-error: true
+        with:
+          pattern: pushed-*
+          merge-multiple: true
+          path: pushed
       - name: Sync docs
-        run: rsync -av
-          --delete
-          --exclude .git
-          --exclude LICENSE
-          --exclude README.md
-          --exclude '*/loaded'
-          --exclude '*/pushed'
-          images/images/ dockerfiles/
+        run: |
+          # Leave the docs of images that were not pushed in this run as they
+          # are, e.g. because their tests failed or they were not built.
+          excludes=()
+          for dir in images/images/*/; do
+            image=$(basename "$dir")
+            if ! [[ -e "pushed/$image" ]]; then
+              echo "Not updating docs for $image: it was not pushed"
+              excludes+=(--exclude "/$image/")
+            fi
+          done
+          rsync -av \
+            --delete \
+            --exclude .git \
+            --exclude LICENSE \
+            --exclude README.md \
+            --exclude '*/loaded' \
+            --exclude '*/pushed' \
+            "${excludes[@]}" \
+            images/images/ dockerfiles/
       - name: Configure SSH Agent
         uses: webfactory/ssh-agent@d4b9b8ff72958532804b70bbe600ad43b36d5f2e
         with:

@@ -91,5 +91,8 @@ override values in the `.env`, you may do so in a `.env.local`.
 - `PUSH=1 task`: builds and push all images. (You may also set `PUSH=1` in your .env.local.)
 - `task -- chicken duck`: builds just the `chicken` and `duck` service, if there were such things.
 - `task test -- chicken duck`: tests the `chicken` and `duck` services.
+- `task push -- chicken`: pushes the `chicken` images that `task` loaded into
+  Docker, e.g. after testing them. This is how the build workflow publishes
+  images.
 - `task clean`: to clean the files on disk (without losing your local cache in the docker builder.)
 - `task clean-all`: to remove all files on disk and the docker builder.

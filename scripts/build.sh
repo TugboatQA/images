@@ -28,17 +28,9 @@ if [[ -f "$parent/built/$key" ]] && [[ "$OVERWRITE_EXISTING" != "true" ]] && [[ 
     exit
 fi
 
-temp=$(mktemp -d)
-trap 'rm -rf $temp' EXIT SIGINT
-
-# Extract the tarball to the temp directory.
-tar -C "$temp" -xf "$tarball"
-
-# Remove volumes and entrypoint from the manifest.
-config=$(jq -r '.[0].Config' "${temp}/manifest.json")
-jq 'del(.config.Volumes,.config.Entrypoint)' "${temp}/${config}" > "${temp}/config.json"
-mv -f "${temp}/config.json" "${temp}/${config}"
-tar -C "$temp" -c . | docker load
+# Volumes and entrypoint inherited from the base image are removed by
+# FROM --reset in the Dockerfile templates.
+docker load -i "$tarball"
 
 touch "$parent/built/$key"
 

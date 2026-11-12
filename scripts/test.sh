@@ -70,6 +70,12 @@ for x in "$servicedir"/*/NAME; do
     dirname=$(dirname "$x")
     tag=$(basename "$dirname")
     image=$NAMESPACE/$NAME:$tag
+    # Volumes and entrypoint from the base image must be removed by FROM --reset.
+    inherited=$(docker inspect "$image" | jq -c '.[0].Config | {Volumes, Entrypoint}')
+    if [[ $(jq '[.Volumes, .Entrypoint] | map(length) | add' <<< "$inherited") -ne 0 ]]; then
+        echo "❌ $image FAILED: has volumes or entrypoint: $inherited"
+        exit 1
+    fi
     if [[ $(docker inspect "$image" --format '{{.Config.Healthcheck}}') = "<nil>" ]]; then
         echo "$image SKIPPED"
         continue

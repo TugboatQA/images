@@ -1,2 +1,1 @@
 FILTER="grep -v -e backports -e oldstable -e sid -e rc -e experimental -e unstable -e testing -e forky"
-PLATFORMS=linux/amd64,linux/arm64

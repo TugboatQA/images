@@ -1,8 +1,8 @@
 {
     "context": "$dir",
     "dockerfile": "Dockerfile",
-    "output": ["type=docker,dest=$dest"],
-    "platforms": ["$platform"],
-    "tags": ["$image"],
+    "output": ["$output"],
+    "platforms": ["linux/amd64"],
+    "tags": $tags,
     "pull": true$cache_block
 }

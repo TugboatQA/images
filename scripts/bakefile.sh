@@ -8,14 +8,20 @@ fi
 
 cat templates/bakefile.template.json > bake.json
 
+# Push straight to the registry when PUSH is enabled, otherwise load the images
+# into the local docker image store.
+if [[ "$PUSH" = "true" ]] || [[ "$PUSH" = "1" ]]; then
+    output="type=registry"
+else
+    output="type=docker"
+fi
+
 for dockerfile in images/*/*/Dockerfile; do
     dir=$(dirname "$dockerfile")
-    parent=$(dirname "$dir")
-    dest="$dir/image.tar"
     name=$(cat "$dir/NAME")
     tag=$(cut -d' ' -f1 < "$dir/TAGS")
-    platform=$(cat "$dir/PLATFORM")
-    image=${NAMESPACE}/${name}:${tag}
+    # shellcheck disable=SC2016
+    tags=$(jq -cR --arg prefix "${NAMESPACE}/${name}:" 'split(" ") | map($prefix + .)' < "$dir/TAGS")
     key=${name}-${tag//\./-}
     cache_block=
 
@@ -27,14 +33,14 @@ for dockerfile in images/*/*/Dockerfile; do
         fi
     fi
 
-    # If we are not overwriting and the tar already exists and has a size
-    # greater than zero, continue to the next Dockerfile.
-    if [[ "$OVERWRITE_EXISTING" != "true" ]] && [[ "$OVERWRITE_EXISTING" != "1" ]] && { [[ -s "$dest" ]] || [[ -f "$parent/built/$key" ]]; }; then
-        echo "Skipping $name; rm $dest or set OVERWRITE_EXISTING to true to overwrite this image" >&2
+    # If we are not overwriting and the image was already built, continue to
+    # the next Dockerfile.
+    if [[ "$OVERWRITE_EXISTING" != "true" ]] && [[ "$OVERWRITE_EXISTING" != "1" ]] && [[ -f "$dir/built" ]]; then
+        echo "Skipping $name:$tag; rm $dir/built or set OVERWRITE_EXISTING to true to overwrite this image" >&2
         continue
     fi
 
-    export dir dest platform image cache_block
+    export dir output tags cache_block
     obj=$(envsubst < templates/bakefile_target.template.json)
 
     jq --arg key "$key" --argjson obj "$obj" '.target += { ($key): $obj } | .group.default.targets += [$key]' bake.json > newbake.json

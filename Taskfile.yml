@@ -136,6 +136,17 @@ tasks:
         msg: The directory services/{{.CLI_ARGS}} does not exist.
     cmd: scripts/test.sh {{.SERVICE}}
 
+  push:
+    desc: 'Push the loaded images of a single service to docker.io, e.g. after testing them.'
+    preconditions:
+      - sh: test -n "{{.CLI_ARGS}}"
+        msg: Specify the service to push after a double dash, e.g. 'task push -- example'.
+      - sh: echo "{{.CLI_ARGS}}" | grep -vq '\s'
+        msg: You may only push one service at a time.
+      - sh: ! test -d services/{{.CLI_ARGS}}
+        msg: The directory services/{{.CLI_ARGS}} does not exist.
+    cmd: scripts/push.sh {{.CLI_ARGS}}
+
   prepare-docs:
     desc: '[subtask] Prepares the images directory for publishing at https://github.com/TugboatQA/dockerfiles.'
     preconditions:

@@ -3,20 +3,9 @@ FROM --reset=volume,entrypoint {{FROM}}
 
 USER root
 
+# glibc-static is needed because runit links its binaries statically.
 RUN yum install -y git sudo openssh-clients ca-certificates net-tools bzip2 \
-      vim-enhanced nmap-ncat make gcc gcc-c++ rsync wget tar jq && \
-    \
-    ( yum install -y glibc-static || \
-      yum --enablerepo=powertools install -y glibc-static || \
-      ( \
-        yum config-manager --set-enabled powertools && \
-        yum install -y glibc-static \
-      ) || \
-      ( \
-        yum config-manager --set-enabled $(yum repolist all | grep codeready | awk '{print $1}') && \
-        yum install -y glibc-static \
-      ) \
-    ) && \
+      vim-enhanced nmap-ncat make gcc gcc-c++ rsync wget tar jq glibc-static && \
     \
     echo "[user]" > ~/.gitconfig && \
     echo "    email = root@tugboat.qa" >> ~/.gitconfig && \
@@ -27,7 +16,8 @@ RUN yum install -y git sudo openssh-clients ca-certificates net-tools bzip2 \
     ln -s /etc/service /service && \
     mkdir /package && \
     cd /package && \
-    wget http://smarden.org/runit/runit-2.1.2.tar.gz && \
+    wget -q https://smarden.org/runit/runit-2.1.2.tar.gz && \
+    echo "6fd0160cb0cf1207de4e66754b6d39750cff14bb0aa66ab49490992c0c47ba18  runit-2.1.2.tar.gz" | sha256sum -c - && \
     tar -zxf runit-2.1.2.tar.gz && \
     rm runit-2.1.2.tar.gz && \
     cd admin/runit-2.1.2 && \

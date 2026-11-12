@@ -59,11 +59,6 @@ jobs:
           && sudo apt-get clean
           && sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
       -
-        # Add support for more platforms with QEMU (optional)
-        # https://github.com/docker/setup-qemu-action
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-      -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Login to Docker Hub
@@ -115,8 +110,8 @@ jobs:
           --exclude .git
           --exclude LICENSE
           --exclude README.md
-          --exclude MANIFEST_LIST
-          --exclude '*/built'
+          --exclude '*/loaded'
+          --exclude '*/pushed'
           images/images/ dockerfiles/
       - name: Configure SSH Agent
         uses: webfactory/ssh-agent@d4b9b8ff72958532804b70bbe600ad43b36d5f2e

@@ -48,76 +48,52 @@ SERVICE=${SERVICE:-$NAME}
 FILTER=${FILTER:-cat}
 TEMPLATE=${TEMPLATE:-apt}
 GETTAGS=${GETTAGS:-getTags}
-# Read in comma-separated platforms as a bash array.
-IFS=',' read -r -a PLATFORMS <<< "${PLATFORMS:-linux/amd64}"
 
 servicedir="images/${SERVICE}"
 mkdir -p "${servicedir}"
 
 for tags in $($GETTAGS "${FILTER}"); do
     tag=$(echo "${tags}" | cut -d, -f1)
-    platform_tags=()
+    imgdir="${servicedir}/${tag}"
+    image="${FROM}:${tag}"
+    mkdir -p "${imgdir}"
+    # The Dockerfile is being regenerated, so the image needs to be rebuilt.
+    rm -f "${imgdir}/loaded" "${imgdir}/pushed"
 
-    for platform in "${PLATFORMS[@]}"; do
-        platform_suffix=$(test "$platform" = "linux/amd64" || echo "-${platform//\//-}")
-        imgdir="${servicedir}/${tag}${platform_suffix}"
-        image="${FROM}:${tag}"
-        mkdir -p "${imgdir}"
-
-        # Add the runit-init.sh if needed.
-        if [[ "$TEMPLATE" != "none" ]]; then
-            cp dist/runit-init.sh "${imgdir}"
-        fi
-
-        RUN=""
-        if [ -e "${dir}/run" ]; then
-            cp "${dir}/run" "${imgdir}/run"
-            chmod 755 "${imgdir}/run"
-            RUN="RUN mkdir -p /etc/service/${SERVICE}\nCOPY run /etc/service/${SERVICE}/run"
-            if [ -e "${dir}/finish" ]; then
-                cp "${dir}/finish" "${imgdir}/finish"
-                chmod 755 "${imgdir}/finish"
-                RUN="${RUN}\nCOPY finish /etc/service/${SERVICE}/finish"
-            fi
-        fi
-
-        dockerfile=/dev/null
-        if [ -e "${dir}/Dockerfile" ]; then
-            dockerfile="${dir}/Dockerfile"
-        fi
-
-        if [ -e "${dir}/files" ]; then
-            cp -r "${dir}/files" "${imgdir}/"
-        fi
-
-        # shellcheck disable=SC2002
-        cat "templates/Dockerfile.${TEMPLATE}.template" | \
-            sed "s|{{FROM}}|${image}|g" | \
-            sed "/{{DOCKERFILE}}/ r ${dockerfile}" | \
-            sed "/{{DOCKERFILE}}/d" | \
-            perl -pe "s|\{\{RUN\}\}|${RUN}|g" \
-            > "${imgdir}/Dockerfile"
-
-        # If there isn't a suffix, we want all tags and aliases. Otherwise, we
-        # just create a single tag with the platform suffix.
-        if [[ -z "$platform_suffix" ]]; then
-            echo "${tags}" | tr ',' ' ' > "${imgdir}/TAGS"
-        else
-            platform_tags+=("${tag}${platform_suffix}")
-            echo "${tag}${platform_suffix}" > "${imgdir}/TAGS"
-        fi
-        echo "${NAME}" > "${imgdir}/NAME"
-        echo "${platform}" > "${imgdir}/PLATFORM"
-    done
-
-    if [[ -n "${platform_tags[*]}" ]]; then
-        # Prefix each platform tag with the namespace and image name.
-        platform_manifest_image_tags=()
-        for platform_tag in "${platform_tags[@]}"; do
-            platform_manifest_image_tags+=("${NAMESPACE}/${NAME}:${platform_tag}")
-        done
-        for x in ${tags//,/ }; do
-            echo "${NAMESPACE}/${NAME}:$x ${NAMESPACE}/${NAME}:$x ${platform_manifest_image_tags[*]}" >> "$servicedir/MANIFEST_LIST"
-        done
+    # Add the runit-init.sh if needed.
+    if [[ "$TEMPLATE" != "none" ]]; then
+        cp dist/runit-init.sh "${imgdir}"
     fi
+
+    RUN=""
+    if [ -e "${dir}/run" ]; then
+        cp "${dir}/run" "${imgdir}/run"
+        chmod 755 "${imgdir}/run"
+        RUN="RUN mkdir -p /etc/service/${SERVICE}\nCOPY run /etc/service/${SERVICE}/run"
+        if [ -e "${dir}/finish" ]; then
+            cp "${dir}/finish" "${imgdir}/finish"
+            chmod 755 "${imgdir}/finish"
+            RUN="${RUN}\nCOPY finish /etc/service/${SERVICE}/finish"
+        fi
+    fi
+
+    dockerfile=/dev/null
+    if [ -e "${dir}/Dockerfile" ]; then
+        dockerfile="${dir}/Dockerfile"
+    fi
+
+    if [ -e "${dir}/files" ]; then
+        cp -r "${dir}/files" "${imgdir}/"
+    fi
+
+    # shellcheck disable=SC2002
+    cat "templates/Dockerfile.${TEMPLATE}.template" | \
+        sed "s|{{FROM}}|${image}|g" | \
+        sed "/{{DOCKERFILE}}/ r ${dockerfile}" | \
+        sed "/{{DOCKERFILE}}/d" | \
+        perl -pe "s|\{\{RUN\}\}|${RUN}|g" \
+        > "${imgdir}/Dockerfile"
+
+    echo "${tags}" | tr ',' ' ' > "${imgdir}/TAGS"
+    echo "${NAME}" > "${imgdir}/NAME"
 done

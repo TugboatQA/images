@@ -2,7 +2,8 @@
 
 This repository contains the scripts used to generate the Docker images used by
 [Tugboat](https://tugboat.qa) Services. All of the images generated here extend
-the Dockerhub "Official Images".
+the Dockerhub "Official Images". Images are built for `linux/amd64` only; use
+QEMU emulation to run them on other platforms.
 
 ## Service Definitions
 
@@ -30,9 +31,11 @@ Docker hub, and give the `write` team write permissions to it.
 ### Dockerfile
 
 This file contains any custom Dockerfile information required for this image.
-Images are copied from the base image, so things like EXPOSE or ENV values are
-not carried over. So, any of those values that need to be in the resulting image
-need to be duplicated here.
+It is inserted into the template for the image (see TEMPLATE below), which
+builds from the base image. Values like EXPOSE, ENV and WORKDIR are inherited
+from the base image, but its VOLUMEs and ENTRYPOINT are removed with
+`FROM --reset`. All templates except `none` also set USER, STOPSIGNAL and CMD
+so that runit starts the service.
 
 ### files
 
@@ -49,7 +52,6 @@ defined in this file.
 * **GETTAGS** - An optional function to generate a list of tags for the image. Most image definitions can be parsed automatically from the dockerhub image definition, but there are some cases that need a little help. The resulting list should be comma-separated, with no spaces, one line per unique image.
 * **FILTER** - An optional filter to run against the parsed list of image tags. Usually this is used to exclude things like `rc` or `unstable` tags. This is used by the default GETTAGS function, and must be explicitly built in to a custom GETTAGS function in order to have any effect there.
 * **TEMPLATE** - Which Dockerfile template to use. Valid options: apk, apt, yum, none. Default: apt
-* **PLATFORMS** - A comma-separated list of platforms to build images for. Default: linux/amd64
 
 ### run
 

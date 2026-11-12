@@ -37,9 +37,13 @@ fi
 shopt -s nullglob
 for dockerfile in images/*/*/Dockerfile; do
     dir=$(dirname "$dockerfile")
-    if [[ "$overwrite" = "false" ]] && { [[ -f "$dir/$marker" ]] || [[ -f "$dir/pushed" ]]; }; then
-        echo "Skipping $dir; rm $dir/$marker or set OVERWRITE_EXISTING to true to overwrite this image" >&2
-        continue
+    if [[ "$overwrite" = "false" ]]; then
+        for existing in "$dir/$marker" "$dir/pushed"; do
+            if [[ -f "$existing" ]]; then
+                echo "Skipping $dir; rm $existing or set OVERWRITE_EXISTING to true to overwrite this image" >&2
+                continue 2
+            fi
+        done
     fi
     name=$(cat "$dir/NAME")
     tags=$(cat "$dir/TAGS")

@@ -119,7 +119,9 @@ tasks:
     cmds:
       - docker buildx bake --builder '{{.BUILDX_BUILDER}}' --file ./bake.json
       # Mark each image as loaded or pushed so it is skipped on the next run.
-      - jq -r '.target[].context' bake.json | xargs -I{} touch {}/{{.MARKER}}
+      # Clear both markers first, so a rebuild that was only loaded does not
+      # keep a stale pushed marker from an earlier run.
+      - jq -r '.target[].context' bake.json | xargs -I{} sh -c 'rm -f "$1/loaded" "$1/pushed" && touch "$1/{{.MARKER}}"' _ {}
 
   test:
     desc: 'Test all images and tags of a single service.'

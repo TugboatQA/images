@@ -62,7 +62,14 @@ done | jq -nR \
           output: $outputs,
           platforms: ["linux/amd64"],
           tags: (.name as $name | .tags | map("\($namespace)/\($name):\(.)")),
-          pull: true
+          pull: true,
+          # Buildx adds a provenance attestation by default when it pushes to
+          # a registry, which turns each tag into an image index with a single
+          # linux/amd64 entry. A pull of an image index fails on a host of any
+          # other architecture, where a pull of a single image manifest
+          # succeeds. Turn the provenance attestation off so that every tag is
+          # a single image manifest.
+          attest: ["type=provenance,disabled=true"]
         }
         + if $gha then {"cache-from": [$cache]} else {} end
         + if $cache_to then {"cache-to": [$cache]} else {} end)}]

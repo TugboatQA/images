@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # Keep the SHA-pinned actions in .github/workflows and .github/actions up to
+  # date.
+  - package-ecosystem: "github-actions"
+    directories:
+      - "/"
+      - "/.github/actions/*"
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]

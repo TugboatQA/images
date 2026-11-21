@@ -16,6 +16,8 @@ on:
   schedule:
     - cron: '0 0 * * 6'
 
+permissions: {}
+
 env:
   # If this changes, also update the if on the docs job. We unfortunately can't
   # use env.PUSH in the if there.
@@ -25,31 +27,46 @@ jobs:
   matrix:
     name: Create service matrix
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - id: set-matrix
-        run: .github/workflows/gha-matrix.sh ${{ inputs.services }} >> $GITHUB_OUTPUT
+        env:
+          SERVICES: ${{ inputs.services }}
+        run: |
+          # SERVICES is a space-separated list, so split it into arguments.
+          # shellcheck disable=SC2086
+          .github/workflows/gha-matrix.sh $SERVICES >> "$GITHUB_OUTPUT"
   build:
     name: Build service
     needs: matrix
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
       fail-fast: false
+    env:
+      SERVICE: ${{ matrix.service }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: $/.github/actions/setup
         with:
           service: ${{ matrix.service }}
       - name: Login to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build
-        run: task -- ${{ matrix.service }}
+        run: task -- "$SERVICE"
         env:
           # Load the images into docker without pushing them, so they can be
           # tested first.
@@ -58,10 +75,10 @@ jobs:
           # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#runner-context
           TMPDIR: ${{ runner.temp }}
       - name: Test healthcheck
-        run: task test -- ${{ matrix.service }}
+        run: task test -- "$SERVICE"
       - name: Push
         if: env.PUSH == 'true'
-        run: task push -- ${{ matrix.service }}
+        run: task push -- "$SERVICE"
       # Record which images directories were pushed, so the docs job only
       # publishes docs for those.
       - name: Record pushed images
@@ -71,7 +88,7 @@ jobs:
           for dir in images/*/; do
             touch "$RUNNER_TEMP/pushed/$(basename "$dir")"
           done
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: env.PUSH == 'true'
         with:
           name: pushed-${{ matrix.service }}
@@ -82,21 +99,25 @@ jobs:
     runs-on: ubuntu-latest
     # If the push portion of this logic changes, change env.PUSH logic as well.
     if: always() && (inputs.push || github.event_name == 'schedule' || github.event_name == 'push')
+    permissions:
+      contents: read
     steps:
       - name: Checkout TugboatQA/images
-        uses: actions/checkout@v3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: images
-      - uses: ./images/.github/actions/setup
+          persist-credentials: false
+      - uses: $/.github/actions/setup
       - name: Checkout TugboatQA/dockerfiles
-        uses: actions/checkout@v3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: TugboatQA/dockerfiles
           path: dockerfiles
+          persist-credentials: false
       - name: Generate docs
         working-directory: images
         run: task generate && task prepare-docs
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         # With no pushed images there is nothing to download, and nothing to
         # update below.
         continue-on-error: true
@@ -126,7 +147,7 @@ jobs:
             "${excludes[@]}" \
             images/images/ dockerfiles/
       - name: Configure SSH Agent
-        uses: webfactory/ssh-agent@d4b9b8ff72958532804b70bbe600ad43b36d5f2e
+        uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - name: Commit and push
@@ -139,4 +160,7 @@ jobs:
             || echo "Pushing to TugboatQA/dockerfiles: PUSH=$PUSH"
           git config user.name github-actions
           git config user.email github-actions@github.com
+          # Push with the deploy key loaded by ssh-agent. The checkout does not
+          # keep its token, which can't push to this repo anyway.
+          git remote set-url origin git@github.com:TugboatQA/dockerfiles.git
           git add . && git diff --cached --exit-code || (git commit -m "$GITHUB_RUN_NUMBER" && git push)

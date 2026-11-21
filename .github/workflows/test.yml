@@ -9,6 +9,8 @@ on:
         description: Space delimited string of services to test. If empty, all will be built.
         type: string
 
+permissions: {}
+
 env:
   PUSH: false
 
@@ -16,45 +18,64 @@ jobs:
   detect-pr-services:
     name: Detect PR services
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       services: ${{ steps.detect-services.outputs.services }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: github.event_name == 'pull_request'
+        with:
+          persist-credentials: false
       - id: detect-services
         if: github.event_name == 'pull_request'
         run: |
           git fetch origin main
-          echo "services=$(.github/workflows/detect-pr-services.sh)" >> $GITHUB_OUTPUT
+          echo "services=$(.github/workflows/detect-pr-services.sh)" >> "$GITHUB_OUTPUT"
   matrix:
     name: Create service matrix
     needs: detect-pr-services
     runs-on: ubuntu-latest
     if: always() && github.event_name != 'pull_request' || needs.detect-pr-services.outputs.services
+    permissions:
+      contents: read
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - id: set-matrix
-        run: .github/workflows/gha-matrix.sh ${{ inputs.services || needs.detect-pr-services.outputs.services }} >> $GITHUB_OUTPUT
+        env:
+          SERVICES: ${{ inputs.services || needs.detect-pr-services.outputs.services }}
+        run: |
+          # SERVICES is a space-separated list, so split it into arguments.
+          # shellcheck disable=SC2086
+          .github/workflows/gha-matrix.sh $SERVICES >> "$GITHUB_OUTPUT"
   test:
     name: Test service
     needs: matrix
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
       fail-fast: false
+    env:
+      SERVICE: ${{ matrix.service }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: $/.github/actions/setup
         with:
           service: ${{ matrix.service }}
       - name: Build
-        run: task -- ${{ matrix.service }}
+        run: task -- "$SERVICE"
         env:
           # Modify the temp dir for Gnu Parallel to use the runner's temp dir.
           # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#runner-context
           TMPDIR: ${{ runner.temp }}
       - name: Test healthcheck
-        run: task test -- ${{ matrix.service }}
+        run: task test -- "$SERVICE"
 

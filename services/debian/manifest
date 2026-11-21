@@ -1,1 +1,7 @@
-FILTER="grep -v -e backports -e oldstable -e sid -e rc -e experimental -e unstable -e testing -e forky"
+# Only publish released versions: codename tags that also have a version
+# number (e.g. trixie, 13), plus the stable alias. This skips testing
+# (currently forky), unstable/sid, experimental, rc-buggy, backports and
+# oldstable, and picks up each new codename once it is released.
+# FILTER is word-split without quote removal, so patterns can't contain
+# spaces; the "." matches the space in the ", " tag separator.
+FILTER="grep -e ,.[0-9] -e ^stable,"

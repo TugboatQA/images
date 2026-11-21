@@ -1,0 +1,43 @@
+name: Set up build environment
+description: Installs Task, GNU Parallel and jq, sets up Buildx and exposes the GitHub Actions cache to it.
+
+inputs:
+  service:
+    description: The service being built, used to decide whether to free up disk space.
+    default: ''
+  task-version:
+    description: The version of Task to install.
+    default: v3.29.1
+  task-checksum:
+    description: The sha256 checksum of the Task .deb package.
+    default: e411770abf73d5e094100ab7a1c8278f35b591ecadbfd778200b6b2ad1ee340b
+
+runs:
+  using: composite
+  steps:
+    # v1.3.1
+    - uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+      # Some of our services need a lot of free disk. We run this action to
+      # free up some disk space, however it is slow, so we conditionally do
+      # this only on those services that need it.
+      if: inputs.service == 'opensearch' || inputs.service == 'dynamodb' || inputs.service == 'postgis' || inputs.service == 'node'
+    - name: Install dependencies
+      shell: bash
+      env:
+        TASK_VERSION: ${{ inputs.task-version }}
+        TASK_CHECKSUM: ${{ inputs.task-checksum }}
+      run: sudo apt-get update
+        && sudo apt-get install -y eatmydata
+        && sudo ln -snf /usr/bin/eatmydata /usr/local/bin/apt-get
+        && sudo apt-get install -y parallel jq curl
+        && curl -L -o /tmp/task_linux_amd64.deb "https://github.com/go-task/task/releases/download/${TASK_VERSION}/task_linux_amd64.deb"
+        && sha256sum /tmp/task_linux_amd64.deb | grep -q "${TASK_CHECKSUM}"
+        && sudo dpkg -i /tmp/task_linux_amd64.deb
+        && sudo apt-get clean
+        && sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    # Expose the actions cache url and token.
+    # https://github.com/tonistiigi/go-actions-cache/blob/master/api.md#authentication
+    - name: Expose GitHub Runtime
+      uses: crazy-max/ghaction-github-runtime@v2
